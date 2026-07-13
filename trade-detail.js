@@ -6,6 +6,7 @@ function getTradeIdFromUrl() {
 async function init() {
   const session = await requireAuth();
   if (!session) return;
+  const sessionUser = session.user;
 
   const tradeId = getTradeIdFromUrl();
   if (!tradeId) {
@@ -25,6 +26,11 @@ async function init() {
     document.getElementById("trade-title").textContent = "Trade not found.";
     window.showToast("Failed to load trade.", "error");
     return;
+  }
+
+  if (trade.user_id !== sessionUser.id) {
+    const delBtn = document.getElementById("delete-btn");
+    if (delBtn) delBtn.style.display = "none";
   }
 
   renderTrade(trade);

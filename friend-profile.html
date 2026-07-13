@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friend Profile — CRT Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">CRT Journal</div>
+    <div class="brand-sub">Social Network</div>
+  </div>
+  <div class="topbar-actions">
+    <a class="btn btn-ghost" href="friends.html">← Back to Friends</a>
+  </div>
+</div>
+
+<main>
+  <div class="page-head">
+    <div class="page-eyebrow mono" id="friend-status">Loading...</div>
+    <h1 id="friend-name">Loading Profile...</h1>
+  </div>
+
+  <div class="stats-row" id="stats-row">
+    <div class="stat-cell"><span class="k mono">Total trades</span><span class="v" id="stat-total">—</span></div>
+    <div class="stat-cell"><span class="k mono">Win rate</span><span class="v" id="stat-winrate">—</span></div>
+    <div class="stat-cell"><span class="k mono">Avg RR achieved</span><span class="v" id="stat-avgrr">—</span></div>
+  </div>
+
+  <h2 style="margin-top: 40px; margin-bottom: 16px;">Trade History</h2>
+  <ul class="trade-list" id="trade-list"></ul>
+  
+  <div class="empty-state" id="empty-state" style="display:none;">
+    No trades shared publicly yet.
+  </div>
+</main>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="config.js?v=4"></script>
+<script src="supabase-client.js?v=4"></script>
+<script src="friend-profile.js?v=1"></script>
+</body>
+</html>

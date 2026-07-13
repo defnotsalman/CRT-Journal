@@ -3,6 +3,24 @@
 
 -- ============ TABLES ============
 
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  display_name text,
+  friend_code text unique,
+  last_seen timestamptz default now(),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists friendships (
+  id uuid primary key default gen_random_uuid(),
+  requester_id uuid not null references profiles(id) on delete cascade,
+  receiver_id uuid not null references profiles(id) on delete cascade,
+  status text not null default 'pending', -- 'pending' or 'accepted'
+  created_at timestamptz not null default now(),
+  unique (requester_id, receiver_id)
+);
+
 create table if not exists trades (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -35,77 +53,111 @@ create index if not exists screenshots_trade_id_idx on screenshots(trade_id);
 
 -- ============ ROW LEVEL SECURITY ============
 
+alter table profiles enable row level security;
+alter table friendships enable row level security;
 alter table trades enable row level security;
 alter table screenshots enable row level security;
 
--- Trades: a user can only see/edit/delete their own rows.
-drop policy if exists "trades_select_own" on trades;
-create policy "trades_select_own" on trades
-  for select using (auth.uid() = user_id);
+-- Profiles: Anyone can view profiles, only owner can edit
+drop policy if exists "profiles_select_all" on profiles;
+create policy "profiles_select_all" on profiles for select using (auth.role() = 'authenticated');
+
+drop policy if exists "profiles_update_own" on profiles;
+create policy "profiles_update_own" on profiles for update using (auth.uid() = id);
+
+drop policy if exists "profiles_insert_own" on profiles;
+create policy "profiles_insert_own" on profiles for insert with check (auth.uid() = id);
+
+
+-- Friendships: You can view if you are the requester or receiver
+drop policy if exists "friendships_select_own" on friendships;
+create policy "friendships_select_own" on friendships for select using (auth.uid() = requester_id or auth.uid() = receiver_id);
+
+drop policy if exists "friendships_insert_auth" on friendships;
+create policy "friendships_insert_auth" on friendships for insert with check (auth.uid() = requester_id);
+
+drop policy if exists "friendships_update_auth" on friendships;
+create policy "friendships_update_auth" on friendships for update using (auth.uid() = receiver_id);
+
+drop policy if exists "friendships_delete_auth" on friendships;
+create policy "friendships_delete_auth" on friendships for delete using (auth.uid() = requester_id or auth.uid() = receiver_id);
+
+
+-- Trades: Owner can do anything. Friends (accepted) can SELECT.
+drop policy if exists "trades_select_own_or_friend" on trades;
+create policy "trades_select_own_or_friend" on trades for select using (
+  auth.uid() = user_id or exists (
+    select 1 from friendships f
+    where f.status = 'accepted'
+    and (
+      (f.requester_id = trades.user_id and f.receiver_id = auth.uid()) or
+      (f.receiver_id = trades.user_id and f.requester_id = auth.uid())
+    )
+  )
+);
 
 drop policy if exists "trades_insert_own" on trades;
-create policy "trades_insert_own" on trades
-  for insert with check (auth.uid() = user_id);
+create policy "trades_insert_own" on trades for insert with check (auth.uid() = user_id);
 
 drop policy if exists "trades_update_own" on trades;
-create policy "trades_update_own" on trades
-  for update using (auth.uid() = user_id);
+create policy "trades_update_own" on trades for update using (auth.uid() = user_id);
 
 drop policy if exists "trades_delete_own" on trades;
-create policy "trades_delete_own" on trades
-  for delete using (auth.uid() = user_id);
+create policy "trades_delete_own" on trades for delete using (auth.uid() = user_id);
 
--- Screenshots: access allowed only if you own the parent trade.
-drop policy if exists "screenshots_select_own" on screenshots;
-create policy "screenshots_select_own" on screenshots
-  for select using (
-    exists (select 1 from trades t where t.id = trade_id and t.user_id = auth.uid())
-  );
+
+-- Screenshots: Same logic as trades
+drop policy if exists "screenshots_select_own_or_friend" on screenshots;
+create policy "screenshots_select_own_or_friend" on screenshots for select using (
+  exists (
+    select 1 from trades t
+    where t.id = screenshots.trade_id
+    and (
+      t.user_id = auth.uid() or exists (
+        select 1 from friendships f
+        where f.status = 'accepted'
+        and (
+          (f.requester_id = t.user_id and f.receiver_id = auth.uid()) or
+          (f.receiver_id = t.user_id and f.requester_id = auth.uid())
+        )
+      )
+    )
+  )
+);
 
 drop policy if exists "screenshots_insert_own" on screenshots;
-create policy "screenshots_insert_own" on screenshots
-  for insert with check (
-    exists (select 1 from trades t where t.id = trade_id and t.user_id = auth.uid())
-  );
+create policy "screenshots_insert_own" on screenshots for insert with check (
+  exists (select 1 from trades t where t.id = trade_id and t.user_id = auth.uid())
+);
 
 drop policy if exists "screenshots_delete_own" on screenshots;
-create policy "screenshots_delete_own" on screenshots
-  for delete using (
-    exists (select 1 from trades t where t.id = trade_id and t.user_id = auth.uid())
-  );
+create policy "screenshots_delete_own" on screenshots for delete using (
+  exists (select 1 from trades t where t.id = trade_id and t.user_id = auth.uid())
+);
+
 
 -- ============ STORAGE BUCKET ============
--- Creates a private bucket for screenshots. Files are stored under a path like:
---   <user_id>/<trade_id>/<filename>
--- which the policies below use to restrict access to the owner only.
-
 insert into storage.buckets (id, name, public)
 values ('trade-screenshots', 'trade-screenshots', false)
 on conflict (id) do nothing;
 
-drop policy if exists "screenshots_storage_select_own" on storage.objects;
-create policy "screenshots_storage_select_own" on storage.objects
-  for select using (
-    bucket_id = 'trade-screenshots'
-    and auth.uid()::text = (storage.foldername(name))[1]
-  );
+-- Storage SELECT: Owners can select. Friends should be able to select, but Supabase Storage RLS doesn't easily join to relational tables without complex functions.
+-- For simplicity and performance, we'll allow any authenticated user to SELECT from the bucket, 
+-- but the UI only gives them the file paths if they have access to the `screenshots` table (via the secure RLS above).
+drop policy if exists "screenshots_storage_select_auth" on storage.objects;
+create policy "screenshots_storage_select_auth" on storage.objects
+  for select using (bucket_id = 'trade-screenshots' and auth.role() = 'authenticated');
 
 drop policy if exists "screenshots_storage_insert_own" on storage.objects;
 create policy "screenshots_storage_insert_own" on storage.objects
-  for insert with check (
-    bucket_id = 'trade-screenshots'
-    and auth.uid()::text = (storage.foldername(name))[1]
-  );
+  for insert with check (bucket_id = 'trade-screenshots' and auth.uid()::text = (storage.foldername(name))[1]);
 
 drop policy if exists "screenshots_storage_delete_own" on storage.objects;
 create policy "screenshots_storage_delete_own" on storage.objects
-  for delete using (
-    bucket_id = 'trade-screenshots'
-    and auth.uid()::text = (storage.foldername(name))[1]
-  );
+  for delete using (bucket_id = 'trade-screenshots' and auth.uid()::text = (storage.foldername(name))[1]);
+
 
 -- ============ EDUCATION POSTS (Community Board) ============
-
 create table if not exists education_posts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -118,17 +170,11 @@ create table if not exists education_posts (
 
 alter table education_posts enable row level security;
 
--- Anyone logged in can view the posts
 drop policy if exists "education_posts_select_all" on education_posts;
-create policy "education_posts_select_all" on education_posts
-  for select using (auth.role() = 'authenticated');
+create policy "education_posts_select_all" on education_posts for select using (auth.role() = 'authenticated');
 
--- Any logged in user can post
 drop policy if exists "education_posts_insert_auth" on education_posts;
-create policy "education_posts_insert_auth" on education_posts
-  for insert with check (auth.role() = 'authenticated' and auth.uid() = user_id);
+create policy "education_posts_insert_auth" on education_posts for insert with check (auth.role() = 'authenticated' and auth.uid() = user_id);
 
--- Only the owner can delete their post
 drop policy if exists "education_posts_delete_own" on education_posts;
-create policy "education_posts_delete_own" on education_posts
-  for delete using (auth.uid() = user_id);
+create policy "education_posts_delete_own" on education_posts for delete using (auth.uid() = user_id);

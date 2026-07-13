@@ -27,6 +27,8 @@ async function signOut() {
   window.location.href = "index.html";
 }
 
+let presenceInterval = null;
+
 // Call this at the top of every page. Redirects to login if no session.
 async function requireAuth() {
   const session = await getSession();
@@ -35,6 +37,16 @@ async function requireAuth() {
     window.location.href = "index.html";
     return null;
   }
+  
+  // Ping presence every 1 minute if user has a profile
+  if (!presenceInterval) {
+    presenceInterval = setInterval(async () => {
+      await supabaseClient.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", session.user.id);
+    }, 60000);
+    // Do one ping immediately
+    supabaseClient.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", session.user.id);
+  }
+
   return session;
 }
 

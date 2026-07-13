@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friends — CRT Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">CRT Journal</div>
+    <div class="brand-sub">Social Network</div>
+  </div>
+  <div class="topbar-actions">
+    <a class="btn btn-ghost" href="index.html">← Dashboard</a>
+  </div>
+</div>
+
+<main>
+  <div class="page-head">
+    <div class="page-eyebrow mono">Collaboration</div>
+    <h1>Your Friends</h1>
+    <p class="page-desc">Add friends to view their trade history and share educational resources.</p>
+  </div>
+
+  <!-- Profile Setup Block (shown if they haven't set a display name yet) -->
+  <div id="profile-setup" class="section-block" style="display:none; border-color: var(--primary);">
+    <h2>Set up your social profile</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 12px;">You need a display name before adding friends.</p>
+    <div style="display:flex; gap: 8px;">
+      <input type="text" id="display-name-input" placeholder="Enter display name..." style="flex-grow:1;">
+      <button class="btn btn-primary" id="save-profile-btn">Save</button>
+    </div>
+  </div>
+
+  <div class="stats-row" id="social-dashboard" style="display:none;">
+    <div class="stat-cell" style="flex: 1;">
+      <span class="k mono">Your Friend Code</span>
+      <div style="display:flex; align-items:center; gap: 12px;">
+        <span class="v" id="my-friend-code" style="color: var(--primary);">—</span>
+        <button class="btn btn-ghost" id="copy-code-btn" style="padding: 4px 8px; font-size: 0.8rem;">Copy</button>
+      </div>
+    </div>
+    <div class="stat-cell" style="flex: 1;">
+      <span class="k mono">Add a Friend</span>
+      <div style="display:flex; gap: 8px; margin-top: 4px;">
+        <input type="text" id="add-friend-input" placeholder="e.g. CRT-1234" style="font-family: monospace;">
+        <button class="btn btn-primary" id="add-friend-btn">Send Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Friend Requests -->
+  <div id="requests-section" style="display:none; margin-top: 40px;">
+    <h2>Friend Requests</h2>
+    <div id="requests-list" style="display:flex; flex-direction:column; gap: 12px; margin-top: 16px;"></div>
+  </div>
+
+  <!-- Accepted Friends -->
+  <div style="margin-top: 40px;">
+    <h2>Your Network</h2>
+    <div class="education-grid" id="friends-grid" style="margin-top: 16px;"></div>
+    <div class="empty-state" id="friends-empty" style="display:none;">
+      You haven't added any friends yet. Share your code to get started!
+    </div>
+  </div>
+
+</main>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="config.js?v=3"></script>
+<script src="supabase-client.js?v=3"></script>
+<script src="friends.js?v=1"></script>
+</body>
+</html>
