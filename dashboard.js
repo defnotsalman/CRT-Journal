@@ -16,6 +16,7 @@ async function init() {
   document.getElementById("logout-btn").addEventListener("click", signOut);
 
   await loadTrades();
+  await loadEducation();
 
   document.getElementById("filter-outcome").addEventListener("change", renderTrades);
   document.getElementById("filter-pair").addEventListener("input", renderTrades);
@@ -130,6 +131,41 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[s]));
+}
+
+async function loadEducation() {
+  const { data, error } = await supabaseClient
+    .from("education_posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const grid = document.getElementById("education-grid");
+  const empty = document.getElementById("edu-empty-state");
+
+  if (error || !data || data.length === 0) {
+    grid.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+
+  empty.style.display = "none";
+  grid.innerHTML = data.map(post => {
+    const date = new Date(post.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const user = post.user_email ? escapeHtml(post.user_email.split("@")[0]) : "Unknown";
+    
+    // Add delete button if the user owns the post
+    // Note: In a real app we'd check auth.uid(), but Supabase RLS handles actual security.
+    // For UI simplicity, we can show the delete button if they want, but here we'll just show the post.
+    
+    return `
+      <div class="edu-card">
+        <div class="edu-meta">${user} • ${date}</div>
+        <h3 class="edu-title">${escapeHtml(post.title)}</h3>
+        <div class="edu-content">${escapeHtml(post.content || "")}</div>
+        ${post.link_url ? `<a href="${escapeHtml(post.link_url)}" target="_blank" class="edu-link">View resource →</a>` : ""}
+      </div>
+    `;
+  }).join("");
 }
 
 init();

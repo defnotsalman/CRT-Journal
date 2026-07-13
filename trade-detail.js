@@ -61,14 +61,20 @@ function renderTrade(t) {
 
   const checklist = t.checklist || {};
   const allItems = window.CHECKLIST_SECTIONS.flatMap(s => s.items);
-  document.getElementById("checklist-review").innerHTML = allItems.map(item => {
-    const passed = !!checklist[item.id];
-    return `
-      <li class="review-item ${passed ? "pass" : "fail"}">
-        <span class="mark">${passed ? "✓" : "✕"}</span>
+  const checkedItems = allItems.filter(item => checklist[item.id]);
+
+  if (checkedItems.length === 0) {
+    document.getElementById("checklist-review").innerHTML = `
+      <div class="empty-state" style="padding: 30px; margin-bottom: 20px;">
+        No checklist items were marked for this trade.
+      </div>`;
+  } else {
+    document.getElementById("checklist-review").innerHTML = checkedItems.map(item => `
+      <li class="review-item pass">
+        <span class="mark">✓</span>
         <label>${item.text}</label>
-      </li>`;
-  }).join("");
+      </li>`).join("");
+  }
 
   if (t.notes) {
     document.getElementById("notes-section").style.display = "block";
@@ -120,13 +126,32 @@ function wireDelete(tradeId) {
   document.getElementById("delete-btn").addEventListener("click", async () => {
     if (!confirm("Delete this trade and its screenshots? This can't be undone.")) return;
     window.setLoading(true);
+
+    // First find any screenshots associated with this trade
+    const { data: shots } = await supabaseClient
+      .from("screenshots")
+      .select("storage_path")
+      .eq("trade_id", tradeId);
+
+    // If there are files, remove them from the storage bucket
+    if (shots && shots.length > 0) {
+      const paths = shots.map(s => s.storage_path);
+      await supabaseClient.storage.from("trade-screenshots").remove(paths);
+    }
+
+    // Now delete the trade row (ON DELETE CASCADE handles the screenshot DB rows automatically)
     const { error } = await supabaseClient.from("trades").delete().eq("id", tradeId);
+    
     if (error) { 
       window.setLoading(false);
       window.showToast("Error deleting: " + error.message, "error"); 
       return; 
     }
-    window.location.href = "index.html";
+    
+    window.showToast("Trade deleted", "success");
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 500);
   });
 }
 

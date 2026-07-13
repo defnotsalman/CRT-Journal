@@ -323,14 +323,71 @@ input::placeholder, textarea::placeholder { color: var(--text-faint); }
   background: var(--bg);
 }
 .file-drop:hover { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
-.file-preview-list { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-.file-preview {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 8px;
+.file-preview-list {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+}
+.file-preview-list img {
+  width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);
+}
+
+/* ==========================================================================
+   EDUCATION HUB
+   ========================================================================== */
+.education-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.edu-card {
+  background: var(--bg-card);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.edu-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.edu-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text);
+}
+
+.edu-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.edu-content {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+
+.edu-link {
+  display: inline-block;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.edu-link:hover {
+  text-decoration: underline;
 }
 
 /* ---------- Detail Page ---------- */

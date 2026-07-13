@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share Resource — CRT Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">CRT Journal</div>
+    <div class="brand-sub">Community Board</div>
+  </div>
+  <div class="topbar-actions">
+    <a class="btn btn-ghost" href="index.html">← Dashboard</a>
+  </div>
+</div>
+
+<main>
+  <div class="page-head">
+    <div class="page-eyebrow mono">New Resource</div>
+    <h1>Share with the community</h1>
+    <p class="page-desc">Post a helpful video, article, or piece of advice for other traders to see.</p>
+  </div>
+
+  <form id="edu-form" style="max-width: 600px;">
+    <div class="field full">
+      <label for="title">Title (e.g. Great video on ICT Concepts)</label>
+      <input type="text" id="title" required>
+    </div>
+    
+    <div class="field full" style="margin-top: 16px;">
+      <label for="link_url">Link URL (Optional)</label>
+      <input type="url" id="link_url" placeholder="https://youtube.com/...">
+    </div>
+
+    <div class="field full" style="margin-top: 16px;">
+      <label for="content">Notes / Description (Optional)</label>
+      <textarea id="content" rows="6" placeholder="Why is this resource helpful?"></textarea>
+    </div>
+
+    <div class="form-actions" style="margin-top: 32px;">
+      <button type="submit" class="btn btn-primary" id="submit-btn">Post to Community</button>
+      <a class="btn btn-ghost" href="index.html">Cancel</a>
+    </div>
+  </form>
+</main>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="new-education.js"></script>
+</body>
+</html>

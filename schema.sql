@@ -103,3 +103,32 @@ create policy "screenshots_storage_delete_own" on storage.objects
     bucket_id = 'trade-screenshots'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
+
+-- ============ EDUCATION POSTS (Community Board) ============
+
+create table if not exists education_posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  user_email text not null,
+  title text not null,
+  content text,
+  link_url text,
+  created_at timestamptz not null default now()
+);
+
+alter table education_posts enable row level security;
+
+-- Anyone logged in can view the posts
+drop policy if exists "education_posts_select_all" on education_posts;
+create policy "education_posts_select_all" on education_posts
+  for select using (auth.role() = 'authenticated');
+
+-- Any logged in user can post
+drop policy if exists "education_posts_insert_auth" on education_posts;
+create policy "education_posts_insert_auth" on education_posts
+  for insert with check (auth.role() = 'authenticated' and auth.uid() = user_id);
+
+-- Only the owner can delete their post
+drop policy if exists "education_posts_delete_own" on education_posts;
+create policy "education_posts_delete_own" on education_posts
+  for delete using (auth.uid() = user_id);
