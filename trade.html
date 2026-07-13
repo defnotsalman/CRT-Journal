@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trade — CRT Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">CRT Journal</div>
+    <div class="brand-sub">Trade detail</div>
+  </div>
+  <div class="topbar-actions">
+    <a class="btn btn-ghost" href="index.html">← Dashboard</a>
+    <button class="btn btn-danger" id="delete-btn">Delete trade</button>
+  </div>
+</div>
+
+<main>
+  <div class="page-head">
+    <div class="page-eyebrow mono" id="trade-date">—</div>
+    <h1 id="trade-title">Loading...</h1>
+  </div>
+
+  <div class="detail-grid" id="detail-grid"></div>
+
+  <div class="section-block">
+    <h2>Checklist at time of trade</h2>
+    <ul class="checklist-review" id="checklist-review"></ul>
+  </div>
+
+  <div class="section-block" id="notes-section" style="display:none;">
+    <h2>Notes</h2>
+    <div class="notes-block" id="notes-block"></div>
+  </div>
+
+  <div class="section-block">
+    <h2>Screenshots</h2>
+    <div class="gallery" id="gallery"></div>
+  </div>
+</main>
+
+<div class="lightbox" id="lightbox">
+  <span class="lightbox-close" id="lightbox-close">close ✕</span>
+  <img id="lightbox-img" src="" alt="Screenshot">
+</div>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="config.js"></script>
+<script src="checklist-items.js"></script>
+<script src="supabase-client.js"></script>
+<script src="trade-detail.js"></script>
+</body>
+</html>

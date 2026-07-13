@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Trade — CRT Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">CRT Journal</div>
+    <div class="brand-sub">Log a trade</div>
+  </div>
+  <div class="topbar-actions">
+    <a class="btn btn-ghost" href="index.html">← Dashboard</a>
+  </div>
+</div>
+
+<main>
+  <div class="page-head">
+    <div class="page-eyebrow mono">New Entry</div>
+    <h1>Log this trade</h1>
+    <p class="page-desc">Fill in the trade details, work through the checklist honestly, and attach your screenshots before submitting.</p>
+  </div>
+
+  <form id="trade-form">
+    <div class="form-grid">
+      <div class="field">
+        <label for="pair">Pair / Instrument</label>
+        <input type="text" id="pair" placeholder="XAUUSD" required>
+      </div>
+      <div class="field">
+        <label for="direction">Direction</label>
+        <select id="direction" required>
+          <option value="long">Long</option>
+          <option value="short">Short</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="session">Session</label>
+        <select id="session">
+          <option value="asian">Asian</option>
+          <option value="london" selected>London</option>
+          <option value="ny">New York</option>
+          <option value="overlap">London/NY overlap</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="htf-anchor">HTF anchor timeframe</label>
+        <select id="htf-anchor">
+          <option value="daily">Daily</option>
+          <option value="h4" selected>H4</option>
+          <option value="h1">H1</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="entry-price">Entry price</label>
+        <input type="number" step="any" id="entry-price">
+      </div>
+      <div class="field">
+        <label for="stop-loss">Stop-loss price</label>
+        <input type="number" step="any" id="stop-loss">
+      </div>
+      <div class="field">
+        <label for="take-profit">Take-profit price</label>
+        <input type="number" step="any" id="take-profit">
+      </div>
+      <div class="field">
+        <label for="risk-percent">Risk % of account</label>
+        <input type="number" step="any" id="risk-percent" placeholder="0.5">
+      </div>
+      <div class="field">
+        <label for="rr-planned">RR planned</label>
+        <input type="number" step="any" id="rr-planned" placeholder="2">
+      </div>
+      <div class="field">
+        <label for="rr-achieved">RR achieved (leave blank if still open)</label>
+        <input type="number" step="any" id="rr-achieved">
+      </div>
+      <div class="field">
+        <label for="outcome">Outcome</label>
+        <select id="outcome">
+          <option value="open">Open</option>
+          <option value="win">Win</option>
+          <option value="loss">Loss</option>
+          <option value="breakeven">Breakeven</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="checklist-container"></div>
+
+    <div class="section-block">
+      <h2>Notes</h2>
+      <div class="field full" style="margin-top:12px;">
+        <textarea id="notes" rows="4" placeholder="Why you took it, what you saw, anything for future you."></textarea>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h2>Screenshots</h2>
+      <div class="section-progress mono">Entry chart, exit chart, anything relevant — you can add more later.</div>
+      <label class="file-drop" for="file-input">Click to choose images, or drag them here</label>
+      <input type="file" id="file-input" accept="image/*" multiple style="display:none;">
+      <div class="file-preview-list" id="file-preview-list"></div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" id="submit-btn">Save trade</button>
+      <a class="btn btn-ghost" href="index.html">Cancel</a>
+    </div>
+    <div class="form-status mono" id="form-status"></div>
+  </form>
+</main>
+
+<div id="toast-container"></div>
+<div id="loading-overlay" class="loading-overlay"><div class="spinner"></div></div>
+
+<script src="config.js"></script>
+<script src="checklist-items.js"></script>
+<script src="supabase-client.js"></script>
+<script src="new-trade.js"></script>
+</body>
+</html>
