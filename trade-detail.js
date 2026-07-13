@@ -28,7 +28,14 @@ async function init() {
   }
 
   renderTrade(trade);
-  await renderScreenshots(tradeId);
+  
+  try {
+    await renderScreenshots(tradeId);
+  } catch (err) {
+    console.error("Error rendering screenshots:", err);
+    document.getElementById("gallery").innerHTML = `<div class="empty-state">Error loading screenshots: ${err.message}</div>`;
+  }
+  
   window.setLoading(false);
   
   wireDelete(tradeId);
