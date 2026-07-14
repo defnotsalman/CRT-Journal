@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { supabase } from "@/lib/supabase";
-import { LogOut, Plus, Users, Trophy, Home } from "lucide-react";
+import { LogOut, Plus, Users, Trophy, Home, BarChart2, BookOpen, User, MessageSquare } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 
 export function TopBar() {
@@ -37,9 +37,24 @@ export function TopBar() {
           <Trophy className="w-4 h-4 mr-2" />
           Leaderboard
         </Link>
+        <Link href="/dashboard/analytics" className={`bubble-nav-item ${pathname === '/dashboard/analytics' ? 'bubble-nav-active' : ''}`}>
+          <BarChart2 className="w-4 h-4 mr-2" />
+          Analytics
+        </Link>
+        <Link href="/dashboard/playbooks" className={`bubble-nav-item ${pathname === '/dashboard/playbooks' ? 'bubble-nav-active' : ''}`}>
+          <BookOpen className="w-4 h-4 mr-2" />
+          Playbooks
+        </Link>
+        <Link href="/dashboard/whisper" className={`bubble-nav-item ${pathname === '/dashboard/whisper' ? 'bubble-nav-active' : ''}`}>
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Whisper
+        </Link>
         <Link href="/dashboard/trades/new" className={`bubble-nav-item ${pathname === '/dashboard/trades/new' ? 'bubble-nav-active' : ''}`}>
           <Plus className="w-4 h-4 mr-2" />
           New Trade
+        </Link>
+        <Link href="/dashboard/profile" className={`bubble-nav-item ${pathname === '/dashboard/profile' ? 'bubble-nav-active' : ''}`}>
+          <User className="w-4 h-4" />
         </Link>
         <button onClick={handleSignOut} className="bubble-nav-item !bg-destructive/10 hover:!bg-destructive/20 hover:!border-destructive/50 text-destructive hover:!text-destructive">
           <LogOut className="w-4 h-4" />

@@ -8,7 +8,18 @@ create table if not exists profiles (
   email text not null,
   display_name text,
   friend_code text unique,
+  avatar_url text,
+  status text,
+  badges jsonb default '[]'::jsonb,
   last_seen timestamptz default now(),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists playbooks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  name text not null,
+  description text,
   created_at timestamptz not null default now()
 );
 
@@ -24,6 +35,7 @@ create table if not exists friendships (
 create table if not exists trades (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  playbook_id uuid references playbooks(id) on delete set null,
   created_at timestamptz not null default now(),
   pair text,
   direction text,
@@ -55,8 +67,14 @@ create index if not exists screenshots_trade_id_idx on screenshots(trade_id);
 
 alter table profiles enable row level security;
 alter table friendships enable row level security;
+alter table playbooks enable row level security;
 alter table trades enable row level security;
 alter table screenshots enable row level security;
+
+create policy "playbooks_select_own" on playbooks for select using (auth.uid() = user_id);
+create policy "playbooks_insert_own" on playbooks for insert with check (auth.uid() = user_id);
+create policy "playbooks_update_own" on playbooks for update using (auth.uid() = user_id);
+create policy "playbooks_delete_own" on playbooks for delete using (auth.uid() = user_id);
 
 -- Profiles: Anyone can view profiles, only owner can edit
 drop policy if exists "profiles_select_all" on profiles;
@@ -157,6 +175,16 @@ create policy "screenshots_storage_delete_own" on storage.objects
   for delete using (bucket_id = 'trade-screenshots' and auth.uid()::text = (storage.foldername(name))[1]);
 
 
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+drop policy if exists "avatars_storage_select" on storage.objects;
+create policy "avatars_storage_select" on storage.objects for select using (bucket_id = 'avatars');
+
+drop policy if exists "avatars_storage_insert" on storage.objects;
+create policy "avatars_storage_insert" on storage.objects for insert with check (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
 -- ============ EDUCATION RESOURCES (Community Board) ============
 create table if not exists education_resources (
   id uuid primary key default gen_random_uuid(),
@@ -214,3 +242,21 @@ create policy "messages_delete_all" on messages for delete using (auth.role() = 
 
 -- Enable Realtime for live chat (already run)
 -- alter publication supabase_realtime add table messages;
+
+-- ============ PRIVATE MESSAGES (Whisper Network) ============
+create table if not exists private_messages (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid not null references profiles(id) on delete cascade,
+  receiver_id uuid not null references profiles(id) on delete cascade,
+  content text not null,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+alter table private_messages enable row level security;
+-- Only sender or receiver can see the message, AND it hasn't expired
+create policy "private_messages_select" on private_messages for select using (
+  (auth.uid() = sender_id or auth.uid() = receiver_id) AND expires_at > now()
+);
+create policy "private_messages_insert" on private_messages for insert with check (auth.uid() = sender_id);
+create policy "private_messages_delete" on private_messages for delete using (auth.uid() = sender_id or auth.uid() = receiver_id);

@@ -17,7 +17,9 @@ export default function NewTradePage() {
   const { session } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [playbooks, setPlaybooks] = useState<any[]>([]);
   const [formData, setFormData] = useState({
+    playbook_id: "none",
     pair: "",
     direction: "long",
     session: "london",
@@ -37,6 +39,13 @@ export default function NewTradePage() {
     gsap.fromTo(".fade-up", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.05 });
   }, []);
 
+  useEffect(() => {
+    if (!session) return;
+    supabase.from("playbooks").select("*").eq("user_id", session.user.id).then(({ data }) => {
+      if (data) setPlaybooks(data);
+    });
+  }, [session]);
+
   const handleToggle = (id: string) => {
     setChecklist(prev => ({ ...prev, [id]: !prev[id] }));
   };
@@ -50,6 +59,7 @@ export default function NewTradePage() {
 
     const payload = {
       user_id: session.user.id,
+      playbook_id: formData.playbook_id === "none" ? null : formData.playbook_id,
       pair: formData.pair,
       direction: formData.direction,
       session: formData.session,
@@ -85,6 +95,18 @@ export default function NewTradePage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border border-border bg-card rounded-xl fade-up">
+          <div className="space-y-2">
+            <Label>Playbook</Label>
+            <Select value={formData.playbook_id} onValueChange={v => setFormData({...formData, playbook_id: v || "none"})}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {playbooks.map(pb => (
+                  <SelectItem key={pb.id} value={pb.id}>{pb.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label>Pair</Label>
             <Input value={formData.pair} onChange={e => setFormData({...formData, pair: e.target.value})} placeholder="XAUUSD" required />
