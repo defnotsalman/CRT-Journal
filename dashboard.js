@@ -10,6 +10,12 @@ async function init() {
     return;
   }
 
+  // Start presence pinging since dashboard doesn't use requireAuth()
+  setInterval(async () => {
+    await supabaseClient.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", session.user.id);
+  }, 60000);
+  supabaseClient.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", session.user.id);
+
   document.getElementById("login-shell").style.display = "none";
   document.getElementById("app").style.display = "block";
 
@@ -206,8 +212,8 @@ window.clearChat = async function() {
   if (!confirm("Are you 100% sure you want to delete ALL messages in the chat history?")) return;
   
   window.setLoading(true);
-  // Supabase JS requires a filter for deletes, so we say "delete where id is not null"
-  const { error } = await supabaseClient.from("messages").delete().not("id", "is", null);
+  // Supabase JS requires a filter. Using neq with a fake UUID is the most robust way to affect all rows.
+  const { error } = await supabaseClient.from("messages").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   window.setLoading(false);
   
   if (error) window.showToast("Failed to clear chat", "error");
