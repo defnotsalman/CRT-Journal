@@ -157,10 +157,10 @@ create policy "screenshots_storage_delete_own" on storage.objects
   for delete using (bucket_id = 'trade-screenshots' and auth.uid()::text = (storage.foldername(name))[1]);
 
 
--- ============ EDUCATION POSTS (Community Board) ============
-create table if not exists education_posts (
+-- ============ EDUCATION RESOURCES (Community Board) ============
+create table if not exists education_resources (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
   user_email text not null,
   title text not null,
   content text,
@@ -168,16 +168,16 @@ create table if not exists education_posts (
   created_at timestamptz not null default now()
 );
 
-alter table education_posts enable row level security;
+alter table education_resources enable row level security;
 
-drop policy if exists "education_posts_select_all" on education_posts;
-create policy "education_posts_select_all" on education_posts for select using (auth.role() = 'authenticated');
+drop policy if exists "education_resources_select_all" on education_resources;
+create policy "education_resources_select_all" on education_resources for select using (auth.role() = 'authenticated');
 
-drop policy if exists "education_posts_insert_auth" on education_posts;
-create policy "education_posts_insert_auth" on education_posts for insert with check (auth.role() = 'authenticated' and auth.uid() = user_id);
+drop policy if exists "education_resources_insert_auth" on education_resources;
+create policy "education_resources_insert_auth" on education_resources for insert with check (auth.role() = 'authenticated' and auth.uid() = user_id);
 
-drop policy if exists "education_posts_delete_own" on education_posts;
-create policy "education_posts_delete_own" on education_posts for delete using (auth.uid() = user_id);
+drop policy if exists "education_resources_delete_own" on education_resources;
+create policy "education_resources_delete_own" on education_resources for delete using (auth.uid() = user_id);
 
 -- ============ EPHEMERAL MESSAGES (Live Chat) ============
 create table if not exists messages (
