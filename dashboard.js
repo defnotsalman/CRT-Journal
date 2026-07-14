@@ -120,6 +120,11 @@ function renderStats() {
 let myProfile = null;
 let realtimeChannel = null;
 
+let CHAT_FRIENDS = [];
+let replyToMsgId = null;
+let contextMsgId = null;
+let allMessagesMap = {}; // store messages to lookup replies locally
+
 async function loadFriendsNetwork(userId) {
   const { data: profile } = await supabaseClient.from("profiles").select("*").eq("id", userId).single();
   myProfile = profile;
@@ -142,15 +147,88 @@ async function loadFriendsNetwork(userId) {
   }
 
   let onlineCount = 0;
-  const friendNames = friends.map(f => {
+  CHAT_FRIENDS = friends.map(f => {
     const friend = f.requester.id === userId ? f.receiver : f.requester;
     const isOnline = Math.floor((new Date() - new Date(friend.last_seen)) / 60000) < 5;
     if (isOnline) onlineCount++;
-    return `${isOnline ? '🟢' : '⚪'} ${escapeHtml(friend.display_name)}`;
+    return { ...friend, isOnline };
   });
 
+  const friendNames = CHAT_FRIENDS.map(f => `${f.isOnline ? '🟢' : '⚪'} ${escapeHtml(f.display_name)}`);
   statusEl.innerHTML = `Sharing with ${friends.length} friend(s) (${onlineCount} online): ${friendNames.join(", ")}`;
 }
+
+// ----- Context Menu & Mentions -----
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById("chat-context-menu");
+  if (menu && menu.style.display === "block" && e.target.id !== "ctx-reply") {
+    menu.style.display = "none";
+  }
+});
+
+document.getElementById("ctx-reply")?.addEventListener("click", () => {
+  if (!contextMsgId) return;
+  const msg = allMessagesMap[contextMsgId];
+  if (!msg) return;
+  
+  replyToMsgId = msg.id;
+  const banner = document.getElementById("reply-banner");
+  const bannerText = document.getElementById("reply-banner-text");
+  banner.style.display = "flex";
+  bannerText.textContent = `Replying to ${msg.profiles?.display_name || 'Unknown'}: "${msg.content}"`;
+  
+  document.getElementById("chat-context-menu").style.display = "none";
+  document.getElementById("chat-input").focus();
+});
+
+window.cancelReply = function() {
+  replyToMsgId = null;
+  document.getElementById("reply-banner").style.display = "none";
+};
+
+function setupMentions(input) {
+  const dropdown = document.getElementById("mentions-dropdown");
+  let cursorPosition = 0;
+  
+  input.addEventListener("input", (e) => {
+    const val = input.value;
+    cursorPosition = input.selectionStart;
+    
+    // Look backwards from cursor for an @
+    const textBeforeCursor = val.substring(0, cursorPosition);
+    const lastAtPos = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtPos !== -1 && !textBeforeCursor.substring(lastAtPos).includes(' ')) {
+      const search = textBeforeCursor.substring(lastAtPos + 1).toLowerCase();
+      const matches = CHAT_FRIENDS.filter(f => f.display_name.toLowerCase().includes(search));
+      
+      if (matches.length > 0) {
+        dropdown.innerHTML = matches.map(f => 
+          `<div style="padding:8px 12px; cursor:pointer; display:flex; align-items:center; gap:8px;" class="mention-item" data-name="${escapeHtml(f.display_name)}">
+             ${f.isOnline ? '🟢' : '⚪'} <span>${escapeHtml(f.display_name)}</span>
+           </div>`
+        ).join("");
+        dropdown.style.display = "flex";
+        
+        // Setup click listeners for items
+        dropdown.querySelectorAll('.mention-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const name = item.dataset.name;
+            const before = val.substring(0, lastAtPos);
+            const after = val.substring(cursorPosition);
+            input.value = before + `@${name} ` + after;
+            dropdown.style.display = "none";
+            input.focus();
+          });
+        });
+        return;
+      }
+    }
+    dropdown.style.display = "none";
+  });
+}
+
+// ----- Main Chat Logic -----
 
 async function loadChat(userId) {
   const msgContainer = document.getElementById("chat-messages");
@@ -160,6 +238,7 @@ async function loadChat(userId) {
   if (!msgContainer || !form) return;
 
   await loadFriendsNetwork(userId);
+  setupMentions(input);
 
   // Load existing messages (<12 hours)
   const { data: messages } = await supabaseClient
@@ -168,7 +247,10 @@ async function loadChat(userId) {
     .order("created_at", { ascending: true });
 
   if (messages) {
-    messages.forEach(m => renderMessage(m, userId));
+    messages.forEach(m => {
+      allMessagesMap[m.id] = m;
+      renderMessage(m, userId);
+    });
     msgContainer.scrollTop = msgContainer.scrollHeight;
   }
 
@@ -178,11 +260,13 @@ async function loadChat(userId) {
       // Fetch profile to get display name
       supabaseClient.from("profiles").select("display_name").eq("id", payload.new.user_id).single().then(({data}) => {
         const msg = { ...payload.new, profiles: data };
+        allMessagesMap[msg.id] = msg;
         renderMessage(msg, userId);
         msgContainer.scrollTop = msgContainer.scrollHeight;
       });
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
+      delete allMessagesMap[payload.old.id];
       const el = document.getElementById(`msg-${payload.old.id}`);
       if (el) el.remove();
     })
@@ -197,7 +281,13 @@ async function loadChat(userId) {
     if (!text) return;
     input.value = "";
     
-    const { error } = await supabaseClient.from("messages").insert({ user_id: myProfile.id, content: text });
+    const payload = { user_id: myProfile.id, content: text };
+    if (replyToMsgId) {
+      payload.reply_to = replyToMsgId;
+      cancelReply();
+    }
+    
+    const { error } = await supabaseClient.from("messages").insert(payload);
     if (error) window.showToast("Failed to send", "error");
   });
 }
@@ -212,7 +302,6 @@ window.clearChat = async function() {
   if (!confirm("Are you 100% sure you want to delete ALL messages in the chat history?")) return;
   
   window.setLoading(true);
-  // Supabase JS requires a filter. Using neq with a fake UUID is the most robust way to affect all rows.
   const { error } = await supabaseClient.from("messages").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   window.setLoading(false);
   
@@ -242,9 +331,34 @@ function renderMessage(m, userId) {
   const d = new Date(m.created_at);
   const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   
+  // Notification alert for mentions
+  if (!isMine && myProfile && m.content.includes(`@${myProfile.display_name}`)) {
+    window.showToast(`🌟 You were mentioned by ${name}!`, "success");
+    // Add flashing star to header
+    const header = document.querySelector("#chat-status").parentElement.querySelector("h2");
+    if (header && !header.innerHTML.includes("star-blink")) {
+      header.innerHTML += ` <span class="star-blink" style="animation: blinker 1s linear infinite; color: gold;">🌟</span>`;
+      setTimeout(() => {
+        const star = header.querySelector(".star-blink");
+        if (star) star.remove();
+      }, 10000); // Remove after 10s
+    }
+  }
+  
   const align = isMine ? "flex-end" : "flex-start";
   const bg = isMine ? "var(--primary)" : "#30363d";
   const color = isMine ? "white" : "var(--text)";
+  
+  let replyHtml = "";
+  if (m.reply_to && allMessagesMap[m.reply_to]) {
+    const rMsg = allMessagesMap[m.reply_to];
+    const rName = escapeHtml(rMsg.profiles?.display_name || "Unknown");
+    replyHtml = `
+      <div style="font-size: 0.7rem; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.2); padding: 4px 8px; border-left: 2px solid rgba(255,255,255,0.5); border-radius: 4px; margin-bottom: 4px; max-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <strong>${rName}</strong>: ${escapeHtml(rMsg.content)}
+      </div>
+    `;
+  }
   
   const el = document.createElement("div");
   el.id = `msg-${m.id}`;
@@ -254,10 +368,23 @@ function renderMessage(m, userId) {
       ${name} • ${timeStr}
       <button onclick="deleteMessage('${m.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.8rem; padding:0;" title="Delete message">🗑️</button>
     </div>
-    <div style="background: ${bg}; color: ${color}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
+    <div class="msg-bubble" style="background: ${bg}; color: ${color}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word; cursor: context-menu;">
+      ${replyHtml}
       ${escapeHtml(m.content)}
     </div>
   `;
+  
+  // Custom Context Menu on Right Click
+  const bubble = el.querySelector(".msg-bubble");
+  bubble.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    contextMsgId = m.id;
+    const menu = document.getElementById("chat-context-menu");
+    menu.style.display = "block";
+    menu.style.left = `${e.pageX}px`;
+    menu.style.top = `${e.pageY}px`;
+  });
+  
   msgContainer.appendChild(el);
 }
 

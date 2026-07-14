@@ -73,10 +73,24 @@
       </div>
     </div>
     
-    <form id="chat-form" style="display: flex; gap: 8px;">
-      <input type="text" id="chat-input" placeholder="Type a message..." style="flex-grow: 1;" required autocomplete="off">
-      <button type="submit" class="btn btn-primary" id="chat-submit" style="padding: 0 20px;">Send</button>
-    </form>
+    <div style="position: relative;">
+      <div id="mentions-dropdown" style="display:none; position:absolute; bottom:100%; left:0; width:200px; max-height:150px; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; margin-bottom:4px; box-shadow:0 -4px 12px rgba(0,0,0,0.5); z-index:100; flex-direction:column;">
+      </div>
+      
+      <div id="reply-banner" style="display:none; background:#30363d; border-left:3px solid var(--primary); padding:6px 10px; margin-bottom:8px; border-radius:4px; font-size:0.8rem; color:var(--text-secondary); justify-content:space-between; align-items:center;">
+        <div id="reply-banner-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;"></div>
+        <button type="button" onclick="cancelReply()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0;">✕</button>
+      </div>
+      
+      <form id="chat-form" style="display: flex; gap: 8px;">
+        <input type="text" id="chat-input" placeholder="Type a message... (@ to tag)" style="flex-grow: 1;" required autocomplete="off">
+        <button type="submit" class="btn btn-primary" id="chat-submit" style="padding: 0 20px;">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="chat-context-menu" style="display:none; position:fixed; z-index:1000; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+    <button id="ctx-reply" style="background:none; border:none; color:var(--text); padding:8px 16px; cursor:pointer; width:100%; text-align:left; border-radius:4px;">↩ Reply</button>
   </div>
 
   <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; margin-bottom: 16px;">

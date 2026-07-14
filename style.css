@@ -505,6 +505,9 @@ input::placeholder, textarea::placeholder { color: var(--text-faint); }
 .toast.error { border-left-color: var(--loss); }
 .toast.fade-out { animation: fadeOut 0.3s forwards ease-in; }
 
+@keyframes blinker {
+  50% { opacity: 0; }
+}
 @keyframes slideIn {
   to { transform: translateX(0); opacity: 1; }
 }

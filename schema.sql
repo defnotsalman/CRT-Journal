@@ -184,6 +184,7 @@ create table if not exists messages (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references profiles(id) on delete cascade,
   content text not null,
+  reply_to uuid references messages(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
