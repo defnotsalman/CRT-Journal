@@ -49,7 +49,7 @@ export default function DashboardPage() {
       
       const netMap: Record<string, any> = {};
       if (friends) {
-        friends.forEach(f => {
+        friends.forEach((f: any) => {
           const friend = f.requester.id === session!.user.id ? f.receiver : f.requester;
           netMap[friend.id] = friend;
         });

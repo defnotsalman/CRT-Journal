@@ -24,8 +24,8 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
       const { data: shots } = await supabase.from("screenshots").select("*").eq("trade_id", id);
       if (shots) {
         const signedUrls = await Promise.all(shots.map(async s => {
-          const { data: { signedUrl } } = await supabase.storage.from("trade-screenshots").createSignedUrl(s.storage_path, 3600);
-          return { ...s, signedUrl };
+          const { data } = await supabase.storage.from("trade-screenshots").createSignedUrl(s.storage_path, 3600);
+          return { ...s, signedUrl: data?.signedUrl || "" };
         }));
         setScreenshots(signedUrls);
       }

@@ -33,7 +33,7 @@ export default function LeaderboardPage() {
         .or(`requester_id.eq.${session!.user.id},receiver_id.eq.${session!.user.id}`);
       
       if (friends) {
-        friends.forEach(f => {
+        friends.forEach((f: any) => {
           const friend = f.requester.id === session!.user.id ? f.receiver : f.requester;
           users[friend.id] = { profile: friend, trades: [] };
         });

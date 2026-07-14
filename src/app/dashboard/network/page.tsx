@@ -149,7 +149,7 @@ export default function NetworkPage() {
           <p className="text-muted-foreground">You have no friends on the network yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {friends.map(f => {
+            {friends.map((f: any) => {
               const friend = f.requester.id === session?.user.id ? f.receiver : f.requester;
               const lastSeen = friend.last_seen ? formatDistanceToNow(new Date(friend.last_seen), { addSuffix: true }) : "never";
               const isOnline = friend.last_seen && (Date.now() - new Date(friend.last_seen).getTime() < 120000);

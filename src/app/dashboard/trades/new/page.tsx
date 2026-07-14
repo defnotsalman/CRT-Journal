@@ -101,7 +101,7 @@ export default function NewTradePage() {
           </div>
           <div className="space-y-2">
             <Label>Direction</Label>
-            <Select value={formData.direction} onValueChange={v => setFormData({...formData, direction: v})}>
+            <Select value={formData.direction} onValueChange={v => setFormData({...formData, direction: v || ""})}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="long">Long</SelectItem>
@@ -111,7 +111,7 @@ export default function NewTradePage() {
           </div>
           <div className="space-y-2">
             <Label>Session</Label>
-            <Select value={formData.session} onValueChange={v => setFormData({...formData, session: v})}>
+            <Select value={formData.session} onValueChange={v => setFormData({...formData, session: v || ""})}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="asian">Asian</SelectItem>
@@ -123,7 +123,7 @@ export default function NewTradePage() {
           </div>
           <div className="space-y-2">
             <Label>HTF Anchor</Label>
-            <Select value={formData.htf_anchor} onValueChange={v => setFormData({...formData, htf_anchor: v})}>
+            <Select value={formData.htf_anchor} onValueChange={v => setFormData({...formData, htf_anchor: v || ""})}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="daily">Daily</SelectItem>
@@ -136,7 +136,7 @@ export default function NewTradePage() {
           <div className="space-y-2"><Label>Stop Loss</Label><Input type="number" step="any" value={formData.stop_loss} onChange={e => setFormData({...formData, stop_loss: e.target.value})} /></div>
           <div className="space-y-2"><Label>Take Profit</Label><Input type="number" step="any" value={formData.take_profit} onChange={e => setFormData({...formData, take_profit: e.target.value})} /></div>
           <div className="space-y-2"><Label>Outcome</Label>
-            <Select value={formData.outcome} onValueChange={v => setFormData({...formData, outcome: v})}>
+            <Select value={formData.outcome} onValueChange={v => setFormData({...formData, outcome: v || ""})}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="open">Open</SelectItem>
