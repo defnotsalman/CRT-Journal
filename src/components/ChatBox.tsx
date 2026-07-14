@@ -19,6 +19,8 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentions, setShowMentions] = useState(false);
 
+  const [contextMenuId, setContextMenuId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!session) return;
 
@@ -148,34 +150,45 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
             const replyMsg = msg.reply_to ? messages.find(m => m.id === msg.reply_to) : null;
             
             return (
-              <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} group`}>
+              <div 
+                key={msg.id} 
+                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`}
+                onMouseLeave={() => setContextMenuId(null)}
+              >
                 <span className="text-[10px] text-muted-foreground mb-1 ml-1">{getDisplayName(msg.user_id)} • {format(new Date(msg.created_at), "h:mm a")}</span>
                 
-                <div className={`relative max-w-[80%] rounded-2xl px-4 py-2 text-sm ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
+                <div 
+                  onContextMenu={(e) => { e.preventDefault(); setContextMenuId(msg.id); }}
+                  className={`relative max-w-[90%] md:max-w-[80%] rounded-2xl px-4 py-2 text-sm cursor-context-menu transition-all ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'} ${contextMenuId === msg.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+                >
                   {replyMsg && (
-                    <div className="mb-2 pl-2 border-l-2 border-primary/50 text-xs opacity-75">
+                    <div className="mb-2 pl-2 border-l-2 border-background/50 text-xs opacity-75">
                       <div className="font-bold">{getDisplayName(replyMsg.user_id)}</div>
                       <div className="truncate">{replyMsg.content}</div>
                     </div>
                   )}
                   {renderContentWithMentions(msg.content)}
                   
-                  <div className="absolute -right-16 top-1/2 -translate-y-1/2 opacity-100 transition-opacity flex items-center gap-1">
-                    <button 
-                      onClick={() => setReplyToMsg(msg)}
-                      className="p-1 hover:bg-muted rounded text-muted-foreground"
-                    >
-                      <Reply className="w-4 h-4" />
-                    </button>
-                    {isMe && (
-                      <button 
-                        onClick={() => handleDeleteSingle(msg.id)}
-                        className="p-1 hover:bg-destructive/20 rounded text-destructive"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+                  {contextMenuId === msg.id && (
+                    <div className={`flex items-center gap-2 mt-2 pt-2 border-t ${isMe ? 'border-primary-foreground/20 justify-end' : 'border-border justify-start'}`}>
+                      {!isMe && (
+                        <button 
+                          onClick={() => { setReplyToMsg(msg); setContextMenuId(null); }}
+                          className="flex items-center gap-1 text-xs font-bold hover:opacity-70 transition-opacity"
+                        >
+                          <Reply className="w-3 h-3" /> Reply
+                        </button>
+                      )}
+                      {isMe && (
+                        <button 
+                          onClick={() => { handleDeleteSingle(msg.id); setContextMenuId(null); }}
+                          className="flex items-center gap-1 text-xs font-bold hover:opacity-70 transition-opacity text-destructive"
+                        >
+                          <Trash className="w-3 h-3" /> Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
