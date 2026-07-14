@@ -41,7 +41,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[80vh]">
-      <Card className="w-full max-w-md bg-card/50 backdrop-blur fade-up border-primary/20">
+      <Card className="w-full max-w-md fade-up border-primary/20">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-black text-primary fade-up tracking-tighter">CRT Journal</CardTitle>
           <CardDescription className="fade-up mt-2">

@@ -34,25 +34,25 @@ export function DashboardStats({ trades, profile }: { trades: any[], profile: an
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <Card className="bg-card/50 backdrop-blur border-border/50 shadow-sm">
+      <Card className="shadow-sm">
         <CardContent className="p-6">
           <div className="text-sm font-mono text-muted-foreground uppercase mb-1">Total trades</div>
           <div className="text-2xl font-bold">{trades.length > 0 ? trades.length : "—"}</div>
         </CardContent>
       </Card>
-      <Card className="bg-card/50 backdrop-blur border-border/50 shadow-sm">
+      <Card className="shadow-sm">
         <CardContent className="p-6">
           <div className="text-sm font-mono text-muted-foreground uppercase mb-1">Win rate</div>
           <div className="text-2xl font-bold text-primary">{winRate}</div>
         </CardContent>
       </Card>
-      <Card className="bg-card/50 backdrop-blur border-border/50 shadow-sm">
+      <Card className="shadow-sm">
         <CardContent className="p-6">
           <div className="text-sm font-mono text-muted-foreground uppercase mb-1">Avg RR</div>
           <div className="text-2xl font-bold">{avgRR}</div>
         </CardContent>
       </Card>
-      <Card className="bg-orange-500/10 border-orange-500/30 backdrop-blur shadow-sm">
+      <Card className="bg-orange-500/10 border-orange-500/30 shadow-sm">
         <CardContent className="p-6">
           <div className="text-sm font-mono text-orange-400 uppercase mb-1">Current Streak 🔥</div>
           <div className="text-2xl font-bold text-orange-400">{streak > 0 ? streak : "—"}</div>
