@@ -17,6 +17,7 @@ async function init() {
 
   await loadTrades();
   await loadEducation();
+  await loadChat(session.user.id);
 
   document.getElementById("filter-outcome").addEventListener("change", renderTrades);
   document.getElementById("filter-pair").addEventListener("input", renderTrades);
@@ -75,21 +76,142 @@ function renderStats() {
   const rrValues = ALL_TRADES.filter(t => t.rr_achieved != null).map(t => Number(t.rr_achieved));
   const avgRR = rrValues.length ? (rrValues.reduce((a, b) => a + b, 0) / rrValues.length).toFixed(2) : "—";
 
-  let complianceSum = 0, complianceCount = 0;
-  ALL_TRADES.forEach(t => {
+  // Calculate Rule-Based Streak
+  let currentStreak = 0;
+  let lastTradeDate = null;
+  const ascendingTrades = [...ALL_TRADES].reverse();
+
+  for (const t of ascendingTrades) {
+    const d = new Date(t.created_at);
+    const dateStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     const c = t.checklist || {};
     const values = Object.values(c);
-    if (values.length) {
-      complianceSum += values.filter(Boolean).length / values.length;
-      complianceCount++;
+    
+    // A rule is broken if any checklist item is unchecked (false)
+    // We only check trades that actually have a checklist
+    const hasFalse = values.includes(false);
+    
+    if (hasFalse) {
+      currentStreak = 0;
+    } else if (values.length > 0) {
+      // Only increment if we haven't incremented today
+      if (dateStr !== lastTradeDate) {
+        currentStreak++;
+        lastTradeDate = dateStr;
+      }
     }
-  });
-  const compliance = complianceCount ? Math.round((complianceSum / complianceCount) * 100) + "%" : "—";
+  }
 
   document.getElementById("stat-total").textContent = total;
   document.getElementById("stat-winrate").textContent = winRate;
   document.getElementById("stat-avgrr").textContent = avgRR;
-  document.getElementById("stat-compliance").textContent = compliance;
+  
+  const streakEl = document.getElementById("stat-streak");
+  if (streakEl) streakEl.textContent = currentStreak;
+}
+
+// ============ EPHEMERAL CHAT ============
+let myProfile = null;
+let realtimeChannel = null;
+
+async function loadFriendsNetwork(userId) {
+  const { data: profile } = await supabaseClient.from("profiles").select("*").eq("id", userId).single();
+  myProfile = profile;
+
+  const { data: friends } = await supabaseClient
+    .from("friendships")
+    .select(`
+      requester:profiles!friendships_requester_id_fkey ( id, display_name, last_seen ),
+      receiver:profiles!friendships_receiver_id_fkey ( id, display_name, last_seen )
+    `)
+    .eq("status", "accepted")
+    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`);
+
+  const statusEl = document.getElementById("chat-status");
+  if (!statusEl) return;
+
+  if (!friends || friends.length === 0) {
+    statusEl.innerHTML = "Add friends to chat!";
+    return;
+  }
+
+  let onlineCount = 0;
+  const friendNames = friends.map(f => {
+    const friend = f.requester.id === userId ? f.receiver : f.requester;
+    const isOnline = Math.floor((new Date() - new Date(friend.last_seen)) / 60000) < 5;
+    if (isOnline) onlineCount++;
+    return `${isOnline ? '🟢' : '⚪'} ${escapeHtml(friend.display_name)}`;
+  });
+
+  statusEl.innerHTML = `Sharing with ${friends.length} friend(s) (${onlineCount} online): ${friendNames.join(", ")}`;
+}
+
+async function loadChat(userId) {
+  const msgContainer = document.getElementById("chat-messages");
+  const form = document.getElementById("chat-form");
+  const input = document.getElementById("chat-input");
+
+  if (!msgContainer || !form) return;
+
+  await loadFriendsNetwork(userId);
+
+  // Load existing messages (<12 hours)
+  const { data: messages } = await supabaseClient
+    .from("messages")
+    .select("*, profiles(display_name)")
+    .order("created_at", { ascending: true });
+
+  if (messages) {
+    messages.forEach(m => renderMessage(m, userId));
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+  }
+
+  // Subscribe to new messages
+  realtimeChannel = supabaseClient.channel('public:messages')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+      // Fetch profile to get display name
+      supabaseClient.from("profiles").select("display_name").eq("id", payload.new.user_id).single().then(({data}) => {
+        const msg = { ...payload.new, profiles: data };
+        renderMessage(msg, userId);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+      });
+    })
+    .subscribe();
+
+  // Handle send
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!myProfile) return window.showToast("Setup your profile in Friends tab first to chat!", "error");
+    
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    
+    const { error } = await supabaseClient.from("messages").insert({ user_id: myProfile.id, content: text });
+    if (error) window.showToast("Failed to send", "error");
+  });
+}
+
+function renderMessage(m, userId) {
+  const msgContainer = document.getElementById("chat-messages");
+  const isMine = m.user_id === userId;
+  const name = isMine ? "You" : escapeHtml(m.profiles?.display_name || "Unknown");
+  const d = new Date(m.created_at);
+  const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  const align = isMine ? "flex-end" : "flex-start";
+  const bg = isMine ? "var(--primary)" : "#30363d";
+  const color = isMine ? "white" : "var(--text)";
+  
+  const el = document.createElement("div");
+  el.style.cssText = `display: flex; flex-direction: column; align-items: ${align}; margin-bottom: 4px;`;
+  el.innerHTML = `
+    <span style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">${name} • ${timeStr}</span>
+    <div style="background: ${bg}; color: ${color}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
+      ${escapeHtml(m.content)}
+    </div>
+  `;
+  msgContainer.appendChild(el);
 }
 
 function renderTrades() {

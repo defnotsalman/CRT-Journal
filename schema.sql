@@ -178,3 +178,32 @@ create policy "education_posts_insert_auth" on education_posts for insert with c
 
 drop policy if exists "education_posts_delete_own" on education_posts;
 create policy "education_posts_delete_own" on education_posts for delete using (auth.uid() = user_id);
+
+-- ============ EPHEMERAL MESSAGES (Live Chat) ============
+create table if not exists messages (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  content text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table messages enable row level security;
+
+-- Only friends can read, and only messages < 12 hours old
+drop policy if exists "messages_select_friends_12h" on messages;
+create policy "messages_select_friends_12h" on messages for select using (
+  created_at > now() - interval '12 hours'
+  and (
+    user_id = auth.uid() or exists (
+      select 1 from friendships f
+      where f.status = 'accepted'
+      and (
+        (f.requester_id = messages.user_id and f.receiver_id = auth.uid()) or
+        (f.receiver_id = messages.user_id and f.requester_id = auth.uid())
+      )
+    )
+  )
+);
+
+drop policy if exists "messages_insert_own" on messages;
+create policy "messages_insert_own" on messages for insert with check (auth.uid() = user_id);
