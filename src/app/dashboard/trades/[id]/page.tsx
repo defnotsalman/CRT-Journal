@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { Trash } from "lucide-react";
 
 export default function TradeDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -22,6 +24,7 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
   const [editOutcome, setEditOutcome] = useState("");
   const [editRR, setEditRR] = useState("");
   const [updating, setUpdating] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     async function loadData() {
@@ -65,6 +68,17 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
     setUpdating(false);
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this trade?")) return;
+    const { error } = await supabase.from("trades").delete().eq("id", id);
+    if (error) {
+      toast.error("Failed to delete trade");
+    } else {
+      toast.success("Trade deleted");
+      router.push("/dashboard");
+    }
+  };
+
   const isWin = trade.outcome === 'win';
   const isLoss = trade.outcome === 'loss';
 
@@ -89,10 +103,18 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground uppercase font-mono">RR Achieved</div><div className="font-bold text-lg text-primary">{trade.rr_achieved ? trade.rr_achieved + 'R' : '—'}</div></CardContent></Card>
       </div>
 
-      {trade.outcome === 'open' && session?.user?.id === trade.user_id && (
-        <Card className="fade-up border-primary/50 bg-primary/5">
+      {session?.user?.id === trade.user_id && (
+        <Card className="fade-up border-primary/50 bg-primary/5 relative">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleDelete}
+            className="absolute top-4 right-4 text-destructive hover:bg-destructive/10"
+          >
+            <Trash className="w-4 h-4 mr-2" /> Delete Trade
+          </Button>
           <CardHeader>
-            <CardTitle className="text-lg">Update Open Trade</CardTitle>
+            <CardTitle className="text-lg">Edit Trade</CardTitle>
           </CardHeader>
           <CardContent className="flex gap-4 items-end">
             <div className="space-y-2 flex-1">
