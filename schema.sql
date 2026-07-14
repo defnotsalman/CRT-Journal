@@ -207,3 +207,9 @@ create policy "messages_select_friends_12h" on messages for select using (
 
 drop policy if exists "messages_insert_own" on messages;
 create policy "messages_insert_own" on messages for insert with check (auth.uid() = user_id);
+
+drop policy if exists "messages_delete_all" on messages;
+create policy "messages_delete_all" on messages for delete using (auth.role() = 'authenticated');
+
+-- Enable Realtime for live chat
+alter publication supabase_realtime add table messages;

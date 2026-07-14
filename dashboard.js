@@ -166,7 +166,7 @@ async function loadChat(userId) {
     msgContainer.scrollTop = msgContainer.scrollHeight;
   }
 
-  // Subscribe to new messages
+  // Subscribe to new and deleted messages
   realtimeChannel = supabaseClient.channel('public:messages')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
       // Fetch profile to get display name
@@ -175,6 +175,10 @@ async function loadChat(userId) {
         renderMessage(msg, userId);
         msgContainer.scrollTop = msgContainer.scrollHeight;
       });
+    })
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
+      const el = document.getElementById(`msg-${payload.old.id}`);
+      if (el) el.remove();
     })
     .subscribe();
 
@@ -192,6 +196,21 @@ async function loadChat(userId) {
   });
 }
 
+window.deleteMessage = async function(msgId) {
+  const pwd = prompt("Enter admin password to delete this message:");
+  if (pwd !== "defnotsam") {
+    if (pwd !== null) window.showToast("Incorrect password", "error");
+    return;
+  }
+  
+  window.setLoading(true);
+  const { error } = await supabaseClient.from("messages").delete().eq("id", msgId);
+  window.setLoading(false);
+  
+  if (error) window.showToast("Failed to delete message", "error");
+  else window.showToast("Message deleted", "success");
+};
+
 function renderMessage(m, userId) {
   const msgContainer = document.getElementById("chat-messages");
   const isMine = m.user_id === userId;
@@ -204,9 +223,13 @@ function renderMessage(m, userId) {
   const color = isMine ? "white" : "var(--text)";
   
   const el = document.createElement("div");
+  el.id = `msg-${m.id}`;
   el.style.cssText = `display: flex; flex-direction: column; align-items: ${align}; margin-bottom: 4px;`;
   el.innerHTML = `
-    <span style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">${name} • ${timeStr}</span>
+    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+      ${name} • ${timeStr}
+      <button onclick="deleteMessage('${m.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.8rem; padding:0;" title="Delete message">🗑️</button>
+    </div>
     <div style="background: ${bg}; color: ${color}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
       ${escapeHtml(m.content)}
     </div>

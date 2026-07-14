@@ -167,6 +167,17 @@ window.rejectRequest = async function(id) {
   await loadFriendRequests();
 };
 
+window.unfriend = async function(id) {
+  if (!confirm("Are you sure you want to unfriend them? They will instantly lose access to your trades and chat.")) return;
+  
+  window.setLoading(true);
+  await supabaseClient.from("friendships").delete().eq("id", id);
+  window.setLoading(false);
+  
+  window.showToast("Unfriended successfully", "success");
+  await loadFriends();
+};
+
 async function loadFriends() {
   // We need to fetch where we are requester OR receiver, and status is accepted
   const { data, error } = await supabaseClient
@@ -210,7 +221,10 @@ async function loadFriends() {
           ${statusDot} ${statusText}
         </div>
         
-        <a href="friend-profile.html?id=${friend.id}" class="btn btn-ghost" style="text-align:center; padding:8px;">View Trades →</a>
+        <div style="display:flex; gap: 8px;">
+          <a href="friend-profile.html?id=${friend.id}" class="btn btn-ghost" style="flex:1; text-align:center; padding:8px;">View Trades</a>
+          <button onclick="unfriend('${f.id}')" class="btn btn-danger" style="padding:8px; font-size: 0.85rem;" title="Unfriend">✕</button>
+        </div>
       </div>
     `;
   }).join("");
