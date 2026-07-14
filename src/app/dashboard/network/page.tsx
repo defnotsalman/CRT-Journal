@@ -92,17 +92,31 @@ export default function NetworkPage() {
     }
   };
 
+  const isOnline = (dateString?: string) => {
+    if (!dateString) return false;
+    return (new Date().getTime() - new Date(dateString).getTime()) < 5 * 60 * 1000;
+  };
+
+  const getRelativeTime = (dateString?: string) => {
+    if (!dateString) return "Never";
+    const mins = Math.floor((new Date().getTime() - new Date(dateString).getTime()) / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
   return (
     <div className="max-w-4xl mx-auto pb-12 space-y-8">
       <div className="fade-up">
         <div className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">Network</div>
-        <h1 className="text-4xl font-black tracking-tight">Friends</h1>
+        <h1 className="text-4xl font-heading tracking-tight">Friends</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card className="fade-up">
           <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-2">Your Friend Code</h2>
+            <h2 className="text-lg font-heading mb-2">Your Friend Code</h2>
             <div className="flex gap-2">
               <Input readOnly value={profile?.friend_code || "Loading..."} className="font-mono text-primary bg-primary/10 border-primary/30" />
               <Button variant="outline" onClick={() => {
@@ -115,9 +129,9 @@ export default function NetworkPage() {
 
         <Card className="fade-up">
           <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-2">Add a Friend</h2>
+            <h2 className="text-lg font-heading mb-2">Add a Friend</h2>
             <form onSubmit={sendRequest} className="flex gap-2">
-              <Input value={friendCode} onChange={e => setFriendCode(e.target.value)} placeholder="Enter code..." />
+              <Input placeholder="Enter code (e.g. A1B2C3)" value={friendCode} onChange={e => setFriendCode(e.target.value)} className="font-mono uppercase" maxLength={6} />
               <Button type="submit">Send Request</Button>
             </form>
           </CardContent>
@@ -125,48 +139,55 @@ export default function NetworkPage() {
       </div>
 
       {requests.length > 0 && (
-        <div className="fade-up space-y-4">
-          <h2 className="text-2xl font-bold">Pending Requests</h2>
-          <div className="space-y-2">
-            {requests.map(req => (
-              <Card key={req.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div><span className="font-bold">{req.requester.display_name}</span> wants to be friends.</div>
-                  <div className="space-x-2">
-                    <Button size="sm" onClick={() => acceptRequest(req.id)}>Accept</Button>
-                    <Button size="sm" variant="outline" onClick={() => declineRequest(req.id)}>Decline</Button>
-                  </div>
-                </CardContent>
-              </Card>
+        <div className="space-y-4 fade-up">
+          <h2 className="text-xl font-heading border-b border-border pb-2">Pending Requests</h2>
+          <div className="grid gap-3">
+            {requests.map(r => (
+              <div key={r.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card/50">
+                <span className="font-bold">{r.requester?.display_name}</span>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => acceptRequest(r.id)}>Accept</Button>
+                  <Button size="sm" variant="destructive" onClick={() => declineRequest(r.id)}>Decline</Button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className="fade-up space-y-4">
-        <h2 className="text-2xl font-bold">Your Network ({friends.length})</h2>
+      <div className="space-y-4 fade-up">
+        <h2 className="text-xl font-heading border-b border-border pb-2">My Network</h2>
         {friends.length === 0 ? (
-          <p className="text-muted-foreground">You have no friends on the network yet.</p>
+          <div className="text-muted-foreground italic p-4 border border-border border-dashed rounded-lg text-center">
+            You haven't added any friends yet.
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {friends.map((f: any) => {
-              const friend = f.requester.id === session?.user.id ? f.receiver : f.requester;
-              const lastSeen = friend.last_seen ? formatDistanceToNow(new Date(friend.last_seen), { addSuffix: true }) : "never";
-              const isOnline = friend.last_seen && (Date.now() - new Date(friend.last_seen).getTime() < 120000);
-
+          <div className="grid gap-3">
+            {friends.map(f => {
+              const friendProf = f.requester_id === session?.user.id ? f.receiver : f.requester;
+              const online = isOnline(friendProf?.last_seen);
               return (
-                <Card key={f.id} className="hover:border-primary/50 transition-colors">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-lg">{friend.display_name}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-muted-foreground/30'}`}></span>
-                        {isOnline ? "Online now" : `Last seen ${lastSeen}`}
-                      </div>
+                <div key={f.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card/50 hover:border-primary/50 transition-colors">
+                  <div>
+                    <div className="font-bold flex items-center gap-2">
+                      {friendProf?.display_name}
+                      {online ? (
+                        <span className="flex h-2 w-2 relative" title="Online now">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                          {getRelativeTime(friendProf?.last_seen)}
+                        </span>
+                      )}
                     </div>
-                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-500 hover:bg-red-500/10" onClick={() => unfriend(f.id)}>Remove</Button>
-                  </CardContent>
-                </Card>
+                    <div className="text-xs text-muted-foreground font-mono">Code: {friendProf?.friend_code}</div>
+                  </div>
+                  <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => unfriend(f.id)}>
+                    Remove
+                  </Button>
+                </div>
               );
             })}
           </div>

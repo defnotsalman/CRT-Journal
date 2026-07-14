@@ -41,8 +41,8 @@ export default function DashboardPage() {
       const { data: friends } = await supabase
         .from("friendships")
         .select(`
-          requester:profiles!friendships_requester_id_fkey ( id, display_name ),
-          receiver:profiles!friendships_receiver_id_fkey ( id, display_name )
+          requester:profiles!friendships_requester_id_fkey ( id, display_name, last_seen ),
+          receiver:profiles!friendships_receiver_id_fkey ( id, display_name, last_seen )
         `)
         .eq("status", "accepted")
         .or(`requester_id.eq.${session!.user.id},receiver_id.eq.${session!.user.id}`);

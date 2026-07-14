@@ -103,7 +103,12 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
     const parts = content.split(/(@\w+)/g);
     return parts.map((part, i) => {
       if (part.startsWith("@")) {
-        return <span key={i} className="text-yellow-400 font-bold bg-yellow-400/10 px-1 rounded">{part}</span>;
+        return (
+          <span key={i} className="text-primary font-bold bg-primary/10 px-1 rounded inline-flex items-center gap-1 border border-primary/20">
+            <span className="animate-pulse">🦇</span>
+            {part}
+          </span>
+        );
       }
       return part;
     });
