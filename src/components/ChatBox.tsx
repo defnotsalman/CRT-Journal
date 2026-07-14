@@ -160,7 +160,7 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
                   )}
                   {renderContentWithMentions(msg.content)}
                   
-                  <div className="absolute -right-16 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                  <div className="absolute -right-16 top-1/2 -translate-y-1/2 opacity-100 transition-opacity flex items-center gap-1">
                     <button 
                       onClick={() => setReplyToMsg(msg)}
                       className="p-1 hover:bg-muted rounded text-muted-foreground"

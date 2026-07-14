@@ -95,7 +95,7 @@ export function TopBar() {
           <BookOpen className="w-4 h-4 mr-2" />
           Playbooks
         </Link>
-        <Link href="/dashboard/whisper" className={`bubble-nav-item ${pathname === '/dashboard/whisper' ? 'bubble-nav-active' : ''}`}>
+        <Link href="/dashboard/whisper" className={`bubble-nav-item ${pathname === '/dashboard/whisper' ? 'bubble-nav-active' : ''} ${hasUnread ? '!bg-red-500/20 !border-red-500 !text-red-500 animate-[pulse_0.5s_ease-in-out_infinite] shadow-[0_0_15px_rgba(239,68,68,0.8)]' : ''}`}>
           <MessageSquare className="w-4 h-4 mr-2" />
           Whisper
         </Link>
