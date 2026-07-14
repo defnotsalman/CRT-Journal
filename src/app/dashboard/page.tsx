@@ -7,6 +7,7 @@ import { DashboardStats } from "@/components/DashboardStats";
 import { TradeList } from "@/components/TradeList";
 import { EducationHub } from "@/components/EducationHub";
 import { ChatBox } from "@/components/ChatBox";
+import { RiddlerBadges } from "@/components/RiddlerBadges";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
@@ -123,7 +124,7 @@ export default function DashboardPage() {
               </div>
               <Link href="/dashboard/education/new"><Button size="sm">Share Resource</Button></Link>
             </div>
-            <EducationHub posts={educationPosts} />
+            <EducationHub posts={educationPosts} currentUserId={session?.user.id} />
           </div>
         </div>
 
@@ -131,6 +132,8 @@ export default function DashboardPage() {
           <ChatBox networkUsers={networkUsers} />
         </div>
       </div>
+      
+      <RiddlerBadges trades={trades} profile={profile} />
     </div>
   );
 }

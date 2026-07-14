@@ -2,8 +2,24 @@
 
 import Link from "next/link";
 import { format } from "date-fns";
+import { Trash } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { useState } from "react";
 
-export function EducationHub({ posts }: { posts: any[] }) {
+export function EducationHub({ posts: initialPosts, currentUserId }: { posts: any[], currentUserId?: string }) {
+  const [posts, setPosts] = useState(initialPosts);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault(); // prevent link navigation
+    const { error } = await supabase.from("education_resources").delete().eq("id", id);
+    if (error) {
+      toast.error("Failed to delete resource");
+    } else {
+      toast.success("Resource deleted");
+      setPosts(prev => prev.filter(p => p.id !== id));
+    }
+  };
   if (posts.length === 0) {
     return (
       <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg mt-4">
@@ -31,7 +47,14 @@ export function EducationHub({ posts }: { posts: any[] }) {
               <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{post.description}</p>
               <div className="mt-auto pt-4 flex items-center justify-between">
                 <span className="text-xs font-mono text-muted-foreground">By {post.profiles?.display_name || "Unknown"}</span>
-                <span className="text-xs text-muted-foreground">{format(new Date(post.created_at), "MMM d")}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{format(new Date(post.created_at), "MMM d")}</span>
+                  {currentUserId === post.user_id && (
+                    <button onClick={(e) => handleDelete(e, post.id)} className="text-destructive hover:bg-destructive/10 p-1 rounded transition-colors">
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

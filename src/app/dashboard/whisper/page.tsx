@@ -48,6 +48,13 @@ export default function WhisperNetworkPage() {
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: true });
       if (data) setMessages(data);
+      
+      // Mark as read
+      await supabase.from("private_messages")
+        .update({ is_read: true })
+        .eq("receiver_id", session!.user.id)
+        .eq("sender_id", selectedFriend.id)
+        .eq("is_read", false);
     }
 
     loadMessages();

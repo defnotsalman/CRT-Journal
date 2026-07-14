@@ -10,10 +10,36 @@ create table if not exists profiles (
   friend_code text unique,
   avatar_url text,
   status text,
+  active_badge text,
   badges jsonb default '[]'::jsonb,
   last_seen timestamptz default now(),
   created_at timestamptz not null default now()
 );
+
+-- We use DO blocks to safely add columns if the table already existed
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE profiles ADD COLUMN avatar_url text;
+  EXCEPTION
+    WHEN duplicate_column THEN null;
+  END;
+  BEGIN
+    ALTER TABLE profiles ADD COLUMN status text;
+  EXCEPTION
+    WHEN duplicate_column THEN null;
+  END;
+  BEGIN
+    ALTER TABLE profiles ADD COLUMN active_badge text;
+  EXCEPTION
+    WHEN duplicate_column THEN null;
+  END;
+  BEGIN
+    ALTER TABLE profiles ADD COLUMN badges jsonb default '[]'::jsonb;
+  EXCEPTION
+    WHEN duplicate_column THEN null;
+  END;
+END $$;
 
 create table if not exists playbooks (
   id uuid primary key default gen_random_uuid(),
@@ -52,6 +78,15 @@ create table if not exists trades (
   notes text
 );
 
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE trades ADD COLUMN playbook_id uuid references playbooks(id) on delete set null;
+  EXCEPTION
+    WHEN duplicate_column THEN null;
+  END;
+END $$;
+
 create table if not exists screenshots (
   id uuid primary key default gen_random_uuid(),
   trade_id uuid not null references trades(id) on delete cascade,
@@ -71,9 +106,13 @@ alter table playbooks enable row level security;
 alter table trades enable row level security;
 alter table screenshots enable row level security;
 
+drop policy if exists "playbooks_select_own" on playbooks;
 create policy "playbooks_select_own" on playbooks for select using (auth.uid() = user_id);
+drop policy if exists "playbooks_insert_own" on playbooks;
 create policy "playbooks_insert_own" on playbooks for insert with check (auth.uid() = user_id);
+drop policy if exists "playbooks_update_own" on playbooks;
 create policy "playbooks_update_own" on playbooks for update using (auth.uid() = user_id);
+drop policy if exists "playbooks_delete_own" on playbooks;
 create policy "playbooks_delete_own" on playbooks for delete using (auth.uid() = user_id);
 
 -- Profiles: Anyone can view profiles, only owner can edit
@@ -154,14 +193,11 @@ create policy "screenshots_delete_own" on screenshots for delete using (
 );
 
 
--- ============ STORAGE BUCKET ============
+-- ============ STORAGE BUCKETS ============
 insert into storage.buckets (id, name, public)
 values ('trade-screenshots', 'trade-screenshots', false)
 on conflict (id) do nothing;
 
--- Storage SELECT: Owners can select. Friends should be able to select, but Supabase Storage RLS doesn't easily join to relational tables without complex functions.
--- For simplicity and performance, we'll allow any authenticated user to SELECT from the bucket, 
--- but the UI only gives them the file paths if they have access to the `screenshots` table (via the secure RLS above).
 drop policy if exists "screenshots_storage_select_auth" on storage.objects;
 create policy "screenshots_storage_select_auth" on storage.objects
   for select using (bucket_id = 'trade-screenshots' and auth.role() = 'authenticated');
@@ -186,6 +222,8 @@ drop policy if exists "avatars_storage_insert" on storage.objects;
 create policy "avatars_storage_insert" on storage.objects for insert with check (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
 
 -- ============ EDUCATION RESOURCES (Community Board) ============
+DROP TABLE IF EXISTS education_posts CASCADE;
+
 create table if not exists education_resources (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references profiles(id) on delete cascade,
@@ -218,7 +256,6 @@ create table if not exists messages (
 
 alter table messages enable row level security;
 
--- Only friends can read, and only messages < 12 hours old
 drop policy if exists "messages_select_friends_12h" on messages;
 create policy "messages_select_friends_12h" on messages for select using (
   created_at > now() - interval '12 hours'
@@ -237,11 +274,9 @@ create policy "messages_select_friends_12h" on messages for select using (
 drop policy if exists "messages_insert_own" on messages;
 create policy "messages_insert_own" on messages for insert with check (auth.uid() = user_id);
 
-drop policy if exists "messages_delete_all" on messages;
-create policy "messages_delete_all" on messages for delete using (auth.role() = 'authenticated');
-
--- Enable Realtime for live chat (already run)
--- alter publication supabase_realtime add table messages;
+-- Fix: Users can only delete their own messages
+drop policy if exists "messages_delete_own" on messages;
+create policy "messages_delete_own" on messages for delete using (auth.uid() = user_id);
 
 -- ============ PRIVATE MESSAGES (Whisper Network) ============
 create table if not exists private_messages (
@@ -249,14 +284,28 @@ create table if not exists private_messages (
   sender_id uuid not null references profiles(id) on delete cascade,
   receiver_id uuid not null references profiles(id) on delete cascade,
   content text not null,
+  is_read boolean default false,
   expires_at timestamptz not null,
   created_at timestamptz not null default now()
 );
 
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE private_messages ADD COLUMN is_read boolean default false;
+  EXCEPTION
+    WHEN duplicate_column THEN null;
+  END;
+END $$;
+
+
 alter table private_messages enable row level security;
 -- Only sender or receiver can see the message, AND it hasn't expired
+drop policy if exists "private_messages_select" on private_messages;
 create policy "private_messages_select" on private_messages for select using (
   (auth.uid() = sender_id or auth.uid() = receiver_id) AND expires_at > now()
 );
+drop policy if exists "private_messages_insert" on private_messages;
 create policy "private_messages_insert" on private_messages for insert with check (auth.uid() = sender_id);
+drop policy if exists "private_messages_delete" on private_messages;
 create policy "private_messages_delete" on private_messages for delete using (auth.uid() = sender_id or auth.uid() = receiver_id);

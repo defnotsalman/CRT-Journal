@@ -167,12 +167,14 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
                     >
                       <Reply className="w-4 h-4" />
                     </button>
-                    <button 
-                      onClick={() => handleDeleteSingle(msg.id)}
-                      className="p-1 hover:bg-destructive/20 rounded text-destructive"
-                    >
-                      <Trash className="w-4 h-4" />
-                    </button>
+                    {isMe && (
+                      <button 
+                        onClick={() => handleDeleteSingle(msg.id)}
+                        className="p-1 hover:bg-destructive/20 rounded text-destructive"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

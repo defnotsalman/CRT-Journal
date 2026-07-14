@@ -18,6 +18,7 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState("");
   const [status, setStatus] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [activeBadge, setActiveBadge] = useState("");
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function ProfilePage() {
         setDisplayName(data.display_name || "");
         setStatus(data.status || "");
         setAvatarUrl(data.avatar_url || "");
+        setActiveBadge(data.active_badge || "");
       }
     }
     load();
@@ -44,6 +46,7 @@ export default function ProfilePage() {
     const { error } = await supabase.from("profiles").update({
       display_name: displayName,
       status: status,
+      active_badge: activeBadge,
       avatar_url: avatarUrl
     }).eq("id", session!.user.id);
 
@@ -134,12 +137,29 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             {profile.badges && profile.badges.length > 0 ? (
-              <div className="flex gap-2">
-                {profile.badges.map((b: any, i: number) => (
-                  <div key={i} className="px-3 py-1 bg-primary/20 text-primary rounded-full text-xs font-bold border border-primary/50">
-                    {b.name || "Badge"}
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Select a badge to display on your public profile next to your name:</p>
+                <div className="flex flex-wrap gap-2">
+                  <div 
+                    onClick={() => setActiveBadge("")}
+                    className={`cursor-pointer px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                      activeBadge === "" ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary/50'
+                    }`}
+                  >
+                    No Badge
                   </div>
-                ))}
+                  {profile.badges.map((b: any, i: number) => (
+                    <div 
+                      key={i} 
+                      onClick={() => setActiveBadge(b.name)}
+                      className={`cursor-pointer px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                        activeBadge === b.name ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_10px_rgba(234,179,8,0.3)]' : 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 hover:border-primary/50'
+                      }`}
+                    >
+                      {b.name}
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">You haven't earned any Riddler Badges yet. Complete weekly challenges to unlock them.</p>

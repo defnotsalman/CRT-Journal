@@ -28,8 +28,8 @@ export default function NetworkPage() {
       .from("friendships")
       .select(`
         id, status, requester_id, receiver_id, created_at,
-        requester:profiles!friendships_requester_id_fkey ( id, display_name, friend_code, last_seen ),
-        receiver:profiles!friendships_receiver_id_fkey ( id, display_name, friend_code, last_seen )
+        requester:profiles!friendships_requester_id_fkey ( id, display_name, friend_code, last_seen, status, active_badge ),
+        receiver:profiles!friendships_receiver_id_fkey ( id, display_name, friend_code, last_seen, status, active_badge )
       `)
       .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
 
@@ -168,8 +168,13 @@ export default function NetworkPage() {
               const online = isOnline(friendProf?.last_seen);
               return (
                 <div key={f.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card/50 hover:border-primary/50 transition-colors">
-                  <div>
+                  <div className="flex-1">
                     <div className="font-bold flex items-center gap-2">
+                      {friendProf?.active_badge && (
+                        <span className="px-1.5 py-0.5 bg-primary/20 text-primary border border-primary/50 rounded text-[10px] uppercase tracking-wider">
+                          {friendProf.active_badge}
+                        </span>
+                      )}
                       {friendProf?.display_name}
                       {online ? (
                         <span className="flex h-2 w-2 relative" title="Online now">
@@ -182,7 +187,12 @@ export default function NetworkPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground font-mono">Code: {friendProf?.friend_code}</div>
+                    {friendProf?.status && (
+                      <div className="mt-2 inline-block px-3 py-1 bg-muted/50 rounded-full border border-border text-xs italic text-muted-foreground shadow-sm">
+                        "{friendProf.status}"
+                      </div>
+                    )}
+                    <div className="text-[10px] text-muted-foreground font-mono mt-2">Code: {friendProf?.friend_code}</div>
                   </div>
                   <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => unfriend(f.id)}>
                     Remove
