@@ -42,7 +42,7 @@ export function TopBar() {
             .eq("receiver_id", session.user.id)
             .eq("is_read", false)
             .limit(1)
-            .then(({ data }) => setHasUnread(data && data.length > 0));
+            .then(({ data }) => setHasUnread(data ? data.length > 0 : false));
         }
       })
       .subscribe();
