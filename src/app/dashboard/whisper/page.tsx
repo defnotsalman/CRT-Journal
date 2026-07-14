@@ -16,6 +16,7 @@ export default function WhisperNetworkPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [contextMenuId, setContextMenuId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -95,7 +96,11 @@ export default function WhisperNetworkPage() {
           // If we receive a message from someone else, update their unread count
           setUnreadCounts(prev => ({ ...prev, [msg.sender_id]: (prev[msg.sender_id] || 0) + 1 }));
         }
-      }).subscribe();
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "private_messages" }, payload => {
+        setMessages(prev => prev.filter(m => m.id !== payload.old.id));
+      })
+      .subscribe();
 
     return () => { supabase.removeChannel(sub); };
   }, [session, selectedFriend]);
@@ -199,9 +204,31 @@ export default function WhisperNetworkPage() {
                   messages.map(msg => {
                     const isMe = msg.sender_id === session!.user.id;
                     return (
-                      <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[70%] p-3 rounded-md ${isMe ? 'bg-primary text-primary-foreground border border-primary/50' : 'bg-zinc-900 border border-zinc-800 text-zinc-300'}`}>
+                      <div 
+                        key={msg.id} 
+                        className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2 group`}
+                        onMouseLeave={() => setContextMenuId(null)}
+                      >
+                        <div 
+                          onContextMenu={(e) => { e.preventDefault(); setContextMenuId(msg.id); }}
+                          className={`relative max-w-[70%] p-3 rounded-md cursor-context-menu transition-all ${isMe ? 'bg-primary text-primary-foreground border border-primary/50' : 'bg-zinc-900 border border-zinc-800 text-zinc-300'} ${contextMenuId === msg.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-black' : ''}`}
+                        >
                           {msg.content}
+                          
+                          {contextMenuId === msg.id && (
+                            <div className={`flex items-center gap-2 mt-2 pt-2 border-t ${isMe ? 'border-primary-foreground/20 justify-end' : 'border-zinc-700 justify-start'}`}>
+                              <button 
+                                onClick={async () => {
+                                  await supabase.from("private_messages").delete().eq("id", msg.id);
+                                  setContextMenuId(null);
+                                }}
+                                className={`flex items-center gap-1 text-xs font-bold hover:opacity-70 transition-opacity ${isMe ? 'text-primary-foreground' : 'text-red-400'}`}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> 
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

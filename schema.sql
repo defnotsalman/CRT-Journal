@@ -309,3 +309,5 @@ drop policy if exists "private_messages_insert" on private_messages;
 create policy "private_messages_insert" on private_messages for insert with check (auth.uid() = sender_id);
 drop policy if exists "private_messages_delete" on private_messages;
 create policy "private_messages_delete" on private_messages for delete using (auth.uid() = sender_id or auth.uid() = receiver_id);
+drop policy if exists "private_messages_update" on private_messages;
+create policy "private_messages_update" on private_messages for update using (auth.uid() = receiver_id or auth.uid() = sender_id);
