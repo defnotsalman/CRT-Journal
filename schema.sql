@@ -161,10 +161,10 @@ create policy "screenshots_storage_delete_own" on storage.objects
 create table if not exists education_resources (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references profiles(id) on delete cascade,
-  user_email text not null,
   title text not null,
-  content text,
-  link_url text,
+  description text,
+  url text,
+  image_url text,
   created_at timestamptz not null default now()
 );
 
