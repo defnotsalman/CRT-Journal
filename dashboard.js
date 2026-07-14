@@ -196,6 +196,24 @@ async function loadChat(userId) {
   });
 }
 
+window.clearChat = async function() {
+  const pwd = prompt("Enter admin password to CLEAR ENTIRE CHAT for everyone:");
+  if (pwd !== "defnotsam") {
+    if (pwd !== null) window.showToast("Incorrect password", "error");
+    return;
+  }
+  
+  if (!confirm("Are you 100% sure you want to delete ALL messages in the chat history?")) return;
+  
+  window.setLoading(true);
+  // Supabase JS requires a filter for deletes, so we say "delete where id is not null"
+  const { error } = await supabaseClient.from("messages").delete().not("id", "is", null);
+  window.setLoading(false);
+  
+  if (error) window.showToast("Failed to clear chat", "error");
+  else window.showToast("Chat cleared completely", "success");
+};
+
 window.deleteMessage = async function(msgId) {
   const pwd = prompt("Enter admin password to delete this message:");
   if (pwd !== "defnotsam") {
