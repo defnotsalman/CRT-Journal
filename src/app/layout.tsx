@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Mono, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { TopBar } from "@/components/TopBar";
@@ -10,15 +10,9 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-const spaceMono = Space_Mono({
-  variable: "--font-heading",
-  weight: ["400", "700"],
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Production Ready Code - CRT",
-  description: "Trade log and checklist history",
+  title: "Gotham Journals",
+  description: "Wayne Enterprises Encrypted Trade Log",
 };
 
 export default function RootLayout({
@@ -29,12 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} ${spaceMono.variable} antialiased min-h-screen relative`}
+        className={`${inter.variable} font-sans antialiased min-h-screen relative`}
       >
-        <div className="tech-grid-container fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-          <div className="tech-grid"></div>
-        </div>
-
         <AuthProvider>
           <TopBar />
           <div className="container mx-auto p-4 md:p-8 max-w-5xl relative z-10">

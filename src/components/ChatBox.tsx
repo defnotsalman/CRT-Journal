@@ -104,9 +104,10 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
     return parts.map((part, i) => {
       if (part.startsWith("@")) {
         return (
-          <code key={i} className="text-white font-mono bg-white/10 px-1.5 py-0.5 rounded text-xs inline-flex items-center gap-1 border border-white/20">
+          <span key={i} className="text-primary font-bold bg-primary/10 px-1 rounded inline-flex items-center gap-1 border border-primary/20 bubble-nav-item !py-0.5 !text-xs !bg-secondary/50 !scale-100 shadow-[0_0_8px_rgba(246,224,94,0.1)]">
+            <span className="animate-pulse">🦇</span>
             {part}
-          </code>
+          </span>
         );
       }
       return part;
