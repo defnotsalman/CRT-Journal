@@ -125,7 +125,8 @@ export default function NewTradePage() {
           <div className="space-y-2"><Label>Entry Price</Label><Input type="number" step="any" value={formData.entry} onChange={e => setFormData({...formData, entry: e.target.value})} /></div>
           <div className="space-y-2"><Label>Stop Loss</Label><Input type="number" step="any" value={formData.stop_loss} onChange={e => setFormData({...formData, stop_loss: e.target.value})} /></div>
           <div className="space-y-2"><Label>Take Profit</Label><Input type="number" step="any" value={formData.take_profit} onChange={e => setFormData({...formData, take_profit: e.target.value})} /></div>
-          <div className="space-y-2"><Label>Outcome</Label>
+          <div className="space-y-2">
+            <Label>Outcome</Label>
             <Select value={formData.outcome} onValueChange={v => setFormData({...formData, outcome: v || ""})}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -135,6 +136,7 @@ export default function NewTradePage() {
                 <SelectItem value="breakeven">Breakeven</SelectItem>
               </SelectContent>
             </Select>
+          </div>
           <div className="space-y-2"><Label>RR Achieved</Label><Input type="number" step="any" value={formData.rr_achieved} onChange={e => setFormData({...formData, rr_achieved: e.target.value})} placeholder="e.g. 2.5" /></div>
         </div>
 
