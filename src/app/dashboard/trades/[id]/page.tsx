@@ -97,7 +97,7 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
           <CardContent className="flex gap-4 items-end">
             <div className="space-y-2 flex-1">
               <label className="text-xs uppercase text-muted-foreground">Outcome</label>
-              <Select value={editOutcome} onValueChange={setEditOutcome}>
+              <Select value={editOutcome} onValueChange={(v) => setEditOutcome(v || "")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="open">Open</SelectItem>
