@@ -19,9 +19,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    const handleProfile = async (session: Session | null) => {
+      if (session) {
+        // Generate friend code if it doesn't exist
+        const friendCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        // Supabase upsert will ignore if id already exists
+        await supabase.from("profiles").upsert({
+          id: session.user.id,
+          email: session.user.email,
+          display_name: session.user.email?.split("@")[0] || "User",
+          friend_code: friendCode
+        }, { onConflict: "id", ignoreDuplicates: true });
+        
+        // Also update last seen
+        await supabase.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", session.user.id);
+      }
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
+      handleProfile(session);
       handleRedirect(session, pathname, router);
     });
 
@@ -30,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
+      handleProfile(session);
       handleRedirect(session, pathname, router);
     });
 

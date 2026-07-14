@@ -68,7 +68,7 @@ export default function NewTradePage() {
 
     const { data: trade, error } = await supabase.from("trades").insert(payload).select().single();
     if (error) {
-      toast.error(error.message);
+      toast.error(`Trade failed: ${error.message || JSON.stringify(error)}`);
       setLoading(false);
       return;
     }

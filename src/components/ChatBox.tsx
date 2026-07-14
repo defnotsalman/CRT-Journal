@@ -16,6 +16,8 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
   const [inputValue, setInputValue] = useState("");
   const [replyToMsg, setReplyToMsg] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentions, setShowMentions] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -52,6 +54,25 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
     }
   }, [messages]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputValue(val);
+    
+    const match = val.match(/@(\w*)$/);
+    if (match) {
+      setMentionQuery(match[1].toLowerCase());
+      setShowMentions(true);
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  const handleMentionSelect = (displayName: string) => {
+    const val = inputValue.replace(/@\w*$/, `@${displayName} `);
+    setInputValue(val);
+    setShowMentions(false);
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -64,10 +85,11 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
 
     setInputValue("");
     setReplyToMsg(null);
+    setShowMentions(false);
 
     const { error } = await supabase.from("messages").insert(payload);
     if (error) {
-      toast.error("Failed to send message");
+      toast.error(`Failed to send: ${error.message}`);
     }
   };
 
@@ -75,9 +97,24 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
     if (id === session?.user.id) return "You";
     return networkUsers[id]?.display_name || "Unknown";
   };
+  
+  // Custom mention rendering
+  const renderContentWithMentions = (content: string) => {
+    const parts = content.split(/(@\w+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("@")) {
+        return <span key={i} className="text-yellow-400 font-bold bg-yellow-400/10 px-1 rounded">{part}</span>;
+      }
+      return part;
+    });
+  };
+
+  const filteredNetwork = Object.values(networkUsers).filter((u: any) => 
+    u.display_name?.toLowerCase().includes(mentionQuery)
+  );
 
   return (
-    <div className="flex flex-col border border-border rounded-xl bg-card overflow-hidden h-[400px]">
+    <div className="flex flex-col border border-border rounded-xl bg-card overflow-hidden h-[400px] relative">
       <div className="p-3 border-b border-border flex justify-between items-center bg-muted/20">
         <h3 className="font-bold flex items-center gap-2">Live Chat 💬</h3>
       </div>
@@ -99,7 +136,7 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
                       <div className="truncate">{replyMsg.content}</div>
                     </div>
                   )}
-                  {msg.content}
+                  {renderContentWithMentions(msg.content)}
                   
                   <button 
                     onClick={() => setReplyToMsg(msg)}
@@ -114,7 +151,21 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
         </div>
       </ScrollArea>
 
-      <div className="p-3 border-t border-border bg-card">
+      <div className="p-3 border-t border-border bg-card relative">
+        {showMentions && filteredNetwork.length > 0 && (
+          <div className="absolute bottom-full mb-2 left-3 bg-card border border-border rounded-lg shadow-lg z-10 w-48 overflow-hidden">
+            {filteredNetwork.map((u: any) => (
+              <div 
+                key={u.id} 
+                className="px-3 py-2 text-sm hover:bg-muted cursor-pointer"
+                onClick={() => handleMentionSelect(u.display_name)}
+              >
+                @{u.display_name}
+              </div>
+            ))}
+          </div>
+        )}
+      
         {replyToMsg && (
           <div className="flex items-center justify-between bg-muted/50 p-2 rounded-t-md text-xs mb-2 border-l-2 border-primary">
             <div className="truncate text-muted-foreground">
@@ -127,8 +178,8 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
         <form onSubmit={handleSend} className="flex gap-2">
           <Input 
             value={inputValue} 
-            onChange={e => setInputValue(e.target.value)} 
-            placeholder="Type a message..." 
+            onChange={handleInputChange} 
+            placeholder="Type a message... (@ to mention)" 
             className="flex-1 bg-background"
           />
           <Button type="submit">Send</Button>
