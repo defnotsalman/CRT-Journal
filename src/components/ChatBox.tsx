@@ -8,7 +8,7 @@ import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ScrollArea } from "./ui/scroll-area";
-import { X, Reply } from "lucide-react";
+import { X, Reply, Trash } from "lucide-react";
 
 export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> }) {
   const { session } = useAuth();
@@ -98,6 +98,22 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
     return networkUsers[id]?.display_name || "Unknown";
   };
   
+  const handleDeleteSingle = async (msgId: string) => {
+    const { error } = await supabase.from("messages").delete().eq("id", msgId);
+    if (error) toast.error("Failed to delete message");
+  };
+
+  const handleClearChat = async () => {
+    const pwd = window.prompt("Enter password to wipe chat:");
+    if (pwd === "defnotsam") {
+      const { error } = await supabase.from("messages").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) toast.error("Failed to clear chat");
+      else toast.success("Chat wiped");
+    } else if (pwd !== null) {
+      toast.error("Incorrect password.");
+    }
+  };
+  
   // Custom mention rendering
   const renderContentWithMentions = (content: string) => {
     const parts = content.split(/(@\w+)/g);
@@ -122,6 +138,7 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
     <div className="flex flex-col border border-border rounded-xl bg-card overflow-hidden h-[400px] relative">
       <div className="p-3 border-b border-border flex justify-between items-center bg-muted/20">
         <h3 className="font-bold flex items-center gap-2">Live Chat 💬</h3>
+        <Button variant="ghost" size="sm" onClick={handleClearChat} className="text-xs text-destructive hover:bg-destructive/10">Clear Chat</Button>
       </div>
       
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
@@ -143,12 +160,20 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
                   )}
                   {renderContentWithMentions(msg.content)}
                   
-                  <button 
-                    onClick={() => setReplyToMsg(msg)}
-                    className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded"
-                  >
-                    <Reply className="w-4 h-4 text-muted-foreground" />
-                  </button>
+                  <div className="absolute -right-16 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                    <button 
+                      onClick={() => setReplyToMsg(msg)}
+                      className="p-1 hover:bg-muted rounded text-muted-foreground"
+                    >
+                      <Reply className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteSingle(msg.id)}
+                      className="p-1 hover:bg-destructive/20 rounded text-destructive"
+                    >
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );

@@ -8,6 +8,10 @@ import { format } from "date-fns";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export default function TradeDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -15,11 +19,18 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
   const { session } = useAuth();
   const [trade, setTrade] = useState<any>(null);
   const [screenshots, setScreenshots] = useState<any[]>([]);
+  const [editOutcome, setEditOutcome] = useState("");
+  const [editRR, setEditRR] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       const { data } = await supabase.from("trades").select("*").eq("id", id).single();
       setTrade(data);
+      if (data) {
+        setEditOutcome(data.outcome);
+        setEditRR(data.rr_achieved ? String(data.rr_achieved) : "");
+      }
 
       const { data: shots } = await supabase.from("screenshots").select("*").eq("trade_id", id);
       if (shots) {
@@ -40,6 +51,19 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
   }, [trade]);
 
   if (!trade) return <div className="p-12 text-center text-muted-foreground">Loading trade...</div>;
+
+  const handleUpdate = async () => {
+    setUpdating(true);
+    const rr = editRR === "" ? null : Number(editRR);
+    const { error } = await supabase.from("trades").update({ outcome: editOutcome, rr_achieved: rr }).eq("id", id);
+    if (error) {
+      toast.error("Failed to update trade");
+    } else {
+      toast.success("Trade updated!");
+      setTrade({ ...trade, outcome: editOutcome, rr_achieved: rr });
+    }
+    setUpdating(false);
+  };
 
   const isWin = trade.outcome === 'win';
   const isLoss = trade.outcome === 'loss';
@@ -64,6 +88,35 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground uppercase font-mono">Session</div><div className="font-bold text-lg">{trade.session || '—'}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground uppercase font-mono">RR Achieved</div><div className="font-bold text-lg text-primary">{trade.rr_achieved ? trade.rr_achieved + 'R' : '—'}</div></CardContent></Card>
       </div>
+
+      {trade.outcome === 'open' && session?.user?.id === trade.user_id && (
+        <Card className="fade-up border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg">Update Open Trade</CardTitle>
+          </CardHeader>
+          <CardContent className="flex gap-4 items-end">
+            <div className="space-y-2 flex-1">
+              <label className="text-xs uppercase text-muted-foreground">Outcome</label>
+              <Select value={editOutcome} onValueChange={setEditOutcome}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="win">Win</SelectItem>
+                  <SelectItem value="loss">Loss</SelectItem>
+                  <SelectItem value="breakeven">Breakeven</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 flex-1">
+              <label className="text-xs uppercase text-muted-foreground">RR Achieved</label>
+              <Input type="number" step="any" value={editRR} onChange={e => setEditRR(e.target.value)} placeholder="e.g. 2.5" />
+            </div>
+            <Button onClick={handleUpdate} disabled={updating}>
+              {updating ? "Updating..." : "Save"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {screenshots.length > 0 && (
         <div className="fade-up space-y-4">

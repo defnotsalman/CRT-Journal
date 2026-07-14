@@ -32,7 +32,6 @@ export default function NewTradePage() {
     notes: ""
   });
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
-  const [files, setFiles] = useState<File[]>([]);
 
   useGSAP(() => {
     gsap.fromTo(".fade-up", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.05 });
@@ -71,15 +70,6 @@ export default function NewTradePage() {
       toast.error(`Trade failed: ${error.message || JSON.stringify(error)}`);
       setLoading(false);
       return;
-    }
-
-    if (files.length > 0) {
-      toast.info(`Uploading ${files.length} screenshot(s)...`);
-      for (const file of files) {
-        const path = `${session.user.id}/${trade.id}/${Date.now()}-${file.name}`;
-        await supabase.storage.from("trade-screenshots").upload(path, file);
-        await supabase.from("screenshots").insert({ trade_id: trade.id, storage_path: path });
-      }
     }
 
     toast.success("Trade saved!");
@@ -145,7 +135,7 @@ export default function NewTradePage() {
                 <SelectItem value="breakeven">Breakeven</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          <div className="space-y-2"><Label>RR Achieved</Label><Input type="number" step="any" value={formData.rr_achieved} onChange={e => setFormData({...formData, rr_achieved: e.target.value})} placeholder="e.g. 2.5" /></div>
         </div>
 
         <div className="space-y-6 fade-up">
@@ -165,17 +155,6 @@ export default function NewTradePage() {
           ))}
         </div>
 
-        <div className="p-6 border border-border bg-card rounded-xl fade-up space-y-4">
-          <h2 className="text-xl font-bold">Screenshots</h2>
-          <Input type="file" multiple accept="image/*" onChange={e => setFiles(Array.from(e.target.files || []))} />
-          <div className="flex gap-2 flex-wrap">
-            {files.map((f, i) => (
-              <div key={i} className="relative w-24 h-24 border border-border rounded overflow-hidden">
-                <img src={URL.createObjectURL(f)} className="object-cover w-full h-full" alt="preview" />
-              </div>
-            ))}
-          </div>
-        </div>
 
         <div className="fade-up">
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
