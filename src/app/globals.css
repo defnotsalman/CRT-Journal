@@ -64,31 +64,53 @@
   --accent: oklch(0.90 0 0);
   --accent-foreground: oklch(0.15 0.01 280);
   --destructive: oklch(0.60 0.15 20);
-  --border: oklch(0.85 0 0);
-  --input: oklch(0.85 0 0);
-  --ring: oklch(0.85 0.15 90);
-  --radius: 0.5rem;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.dark {
-  --background: oklch(0 0 0); /* Pure Black */
-  --foreground: oklch(0.95 0 0); /* Off-white text */
-  --card: oklch(0.10 0 0); /* Very dark grey for cards */
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.10 0 0);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.85 0.18 90); /* Vibrant Bat Yellow */
-  --primary-foreground: oklch(0 0 0);
-  --secondary: oklch(0.15 0 0);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.12 0 0);
-  --muted-foreground: oklch(0.60 0 0);
-  --accent: oklch(0.15 0 0);
-  --accent-foreground: oklch(0.85 0.18 90);
-  --destructive: oklch(0.60 0.15 20);
-  --border: oklch(0.18 0 0);
-  --input: oklch(0.18 0 0);
-  --ring: oklch(0.85 0.18 90);
+@layer base {
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.1 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.1 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.1 0 0);
+    --primary: oklch(0.1 0 0);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.95 0 0);
+    --secondary-foreground: oklch(0.1 0 0);
+    --muted: oklch(0.95 0 0);
+    --muted-foreground: oklch(0.4 0 0);
+    --accent: oklch(0.95 0 0);
+    --accent-foreground: oklch(0.1 0 0);
+    --destructive: oklch(0.6 0.2 20);
+    --border: oklch(0.9 0 0);
+    --input: oklch(0.9 0 0);
+    --ring: oklch(0.1 0 0);
+    --radius: 0.25rem;
+  }
+
+  .dark {
+    --background: oklch(0 0 0); /* Pure Black */
+    --foreground: oklch(0.95 0 0); /* Off-white text */
+    --card: oklch(0 0 0); /* Transparent-ish cards */
+    --card-foreground: oklch(0.95 0 0);
+    --popover: oklch(0 0 0);
+    --popover-foreground: oklch(0.95 0 0);
+    --primary: oklch(1 0 0); /* Pure White primary */
+    --primary-foreground: oklch(0 0 0); /* Black text on white */
+    --secondary: oklch(0.1 0 0);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.08 0 0);
+    --muted-foreground: oklch(0.6 0 0);
+    --accent: oklch(0.15 0 0);
+    --accent-foreground: oklch(1 0 0);
+    --destructive: oklch(0.6 0.2 20);
+    --border: oklch(0.15 0 0); /* Very subtle grey borders */
+    --input: oklch(0.15 0 0);
+    --ring: oklch(0.3 0 0);
+  }
 }
 
 @layer base {
@@ -97,54 +119,57 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: 
-      radial-gradient(circle at 15% 50%, rgba(246, 224, 94, 0.02), transparent 25%),
-      radial-gradient(circle at 85% 30%, rgba(246, 224, 94, 0.015), transparent 25%);
-    background-attachment: fixed;
-    position: relative;
   }
   html {
     font-family: var(--font-sans);
   }
   h1, h2, h3, .font-heading {
     font-family: var(--font-heading);
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
-  /* Moving Gotham Fog Animation */
-  @keyframes fogMove {
-    0% { transform: translateX(-10%) translateY(-10%) scale(1.1); }
-    50% { transform: translateX(5%) translateY(5%) scale(1.05); }
-    100% { transform: translateX(-10%) translateY(-10%) scale(1.1); }
+  /* 3D Animated Tech Grid */
+  .tech-grid-container {
+    perspective: 1000px;
   }
 
-  body::before {
-    content: "";
-    position: fixed;
-    inset: -50%;
-    z-index: -1;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-    animation: fogMove 60s ease-in-out infinite alternate;
-    pointer-events: none;
-    mix-blend-mode: overlay;
+  .tech-grid {
+    position: absolute;
+    width: 200vw;
+    height: 200vh;
+    left: -50vw;
+    top: -50vh;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 50px 50px;
+    transform: rotateX(60deg) translateY(0);
+    animation: gridMove 15s linear infinite;
+    mask-image: linear-gradient(to bottom, transparent, black 10%, black 70%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 70%, transparent);
   }
 
-  /* Subtle Distressed Metal Texture */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.01'/%3E%3C/svg%3E");
-    pointer-events: none;
+  @keyframes gridMove {
+    0% {
+      transform: rotateX(60deg) translateY(0);
+    }
+    100% {
+      transform: rotateX(60deg) translateY(50px);
+    }
   }
 
-  /* Universal Batman Hover Glows */
+  /* Universal Tech UI Overrides */
+  .border {
+    border-width: 1px !important;
+  }
+  .bg-card {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(10px);
+  }
   button, .group {
-    @apply transition-all duration-300;
+    @apply transition-all duration-200;
   }
   button:hover:not(:disabled) {
-    box-shadow: 0 0 15px rgba(246, 224, 94, 0.15);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
   }
 }

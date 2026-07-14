@@ -16,38 +16,38 @@ export function TopBar() {
   if (!session) return null;
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-      <Link href="/dashboard" className="flex flex-col no-underline group">
-        <div className="text-2xl font-bold font-heading tracking-widest text-primary group-hover:text-primary/80 transition-colors">GOTHAM JOURNALS</div>
-        <div className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-mono">Wayne Enterprises Tech</div>
+    <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/50 backdrop-blur-md">
+      <Link href="/dashboard" className="flex items-center gap-2 group no-underline">
+        <div className="w-6 h-6 rounded bg-white flex items-center justify-center text-black font-bold font-heading text-xs">v1</div>
+        <div className="text-sm font-mono tracking-widest text-white/80 group-hover:text-white transition-colors">Production ready code</div>
       </Link>
       <div className="flex items-center gap-2">
         <Link href="/dashboard">
-          <Button variant="ghost" size="sm">
-            <Home className="w-4 h-4 mr-2" />
+          <Button variant="ghost" size="sm" className="font-mono text-xs rounded-full border border-transparent hover:border-white/20">
+            <Home className="w-3 h-3 mr-2" />
             Home
           </Button>
         </Link>
         <Link href="/dashboard/network">
-          <Button variant="ghost" size="sm">
-            <Users className="w-4 h-4 mr-2" />
-            Friends
+          <Button variant="ghost" size="sm" className="font-mono text-xs rounded-full border border-transparent hover:border-white/20">
+            <Users className="w-3 h-3 mr-2" />
+            Network
           </Button>
         </Link>
         <Link href="/dashboard/leaderboard">
-          <Button variant="ghost" size="sm" className="text-primary hover:text-primary">
-            <Trophy className="w-4 h-4 mr-2" />
-            Leaderboard
+          <Button variant="ghost" size="sm" className="font-mono text-xs rounded-full border border-transparent hover:border-white/20 text-white hover:text-white">
+            <Trophy className="w-3 h-3 mr-2" />
+            Rank
           </Button>
         </Link>
         <Link href="/dashboard/trades/new">
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            New Trade
+          <Button size="sm" className="font-mono text-xs rounded-full bg-white text-black hover:bg-white/90">
+            <Plus className="w-3 h-3 mr-2" />
+            Init Trade
           </Button>
         </Link>
-        <Button variant="ghost" size="sm" onClick={handleSignOut}>
-          <LogOut className="w-4 h-4" />
+        <Button variant="ghost" size="sm" onClick={handleSignOut} className="rounded-full">
+          <LogOut className="w-3 h-3" />
         </Button>
       </div>
     </div>
