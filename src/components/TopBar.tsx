@@ -63,11 +63,9 @@ export function TopBar() {
   return (
     <div className="flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-md mb-8">
       <Link href="/dashboard" className="flex items-center gap-3 no-underline group hover:scale-105 transition-transform duration-300">
-        {showBat && (
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.5)]">
-            <span className="text-xl">🦇</span>
-          </div>
-        )}
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${showBat ? 'bg-primary/20 border-primary animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.5)] scale-110' : 'bg-muted/10 border-border opacity-30 grayscale'}`}>
+          <span className="text-xl">🦇</span>
+        </div>
         <div className="flex flex-col">
           <div className="text-2xl font-bold font-sans tracking-tight text-primary group-hover:text-primary/80 transition-colors drop-shadow-[0_0_8px_rgba(246,224,94,0.3)]">GOTHAM JOURNALS</div>
           <div className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-sans font-semibold">Wayne Enterprises Tech</div>
