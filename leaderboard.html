@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard & Analytics — CRT Journal</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="topbar">
+    <a href="index.html" class="brand" style="text-decoration:none;">
+      <div class="brand-mark">CRT Journal</div>
+      <div class="brand-sub">Trade log & checklist history</div>
+    </a>
+    <div class="topbar-actions">
+      <a class="btn btn-ghost" href="index.html">Dashboard</a>
+      <a class="btn btn-ghost" href="friends.html" style="margin-right: 8px;">Friends</a>
+      <a class="btn btn-ghost" href="leaderboard.html" style="color:var(--primary);">Leaderboard 🏆</a>
+      <a class="btn btn-primary" href="new-trade.html">+ New Trade</a>
+    </div>
+  </div>
+
+  <main>
+    <div class="page-head">
+      <div class="page-eyebrow mono">Network</div>
+      <h1>Leaderboard & Analytics</h1>
+    </div>
+
+    <!-- Toggle Buttons -->
+    <div style="display:flex; gap: 12px; margin-bottom: 24px;">
+      <button id="tab-leaderboard" class="btn btn-primary">Network Leaderboard</button>
+      <button id="tab-analytics" class="btn btn-ghost">My Personal Analytics</button>
+    </div>
+
+    <!-- Leaderboard Section -->
+    <div id="section-leaderboard">
+      <div class="section-block">
+        <h2>Top Win Rates</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 16px;">Minimum 3 trades required. Ranked by Win Rate across you and your friends.</p>
+        <ul class="trade-list" id="lb-winrate">
+          <div style="padding:12px; text-align:center; color:var(--text-muted);">Loading leaderboard...</div>
+        </ul>
+      </div>
+
+      <div class="section-block" style="margin-top:24px;">
+        <h2>Highest Average RR</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 16px;">Minimum 3 trades required. Ranked by Average RR Achieved.</p>
+        <ul class="trade-list" id="lb-avgrr">
+          <div style="padding:12px; text-align:center; color:var(--text-muted);">Loading leaderboard...</div>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div id="section-analytics" style="display:none;">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+        <div class="section-block">
+          <h3>Win / Loss Ratio</h3>
+          <div style="width: 100%; max-width: 250px; margin: 0 auto; margin-top:24px;">
+            <canvas id="chart-winloss"></canvas>
+          </div>
+        </div>
+        
+        <div class="section-block">
+          <h3>Win Rate by Pair</h3>
+          <div style="width: 100%; margin-top:24px;">
+            <canvas id="chart-pairs"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <script src="config.js?v=2"></script>
+  <script src="supabase-client.js?v=2"></script>
+  <script src="leaderboard.js?v=1"></script>
+</body>
+</html>
