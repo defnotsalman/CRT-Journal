@@ -211,5 +211,5 @@ create policy "messages_insert_own" on messages for insert with check (auth.uid(
 drop policy if exists "messages_delete_all" on messages;
 create policy "messages_delete_all" on messages for delete using (auth.role() = 'authenticated');
 
--- Enable Realtime for live chat
-alter publication supabase_realtime add table messages;
+-- Enable Realtime for live chat (already run)
+-- alter publication supabase_realtime add table messages;
