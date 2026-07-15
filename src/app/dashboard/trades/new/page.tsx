@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageDropzone } from "@/components/ImageDropzone";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
@@ -202,13 +203,7 @@ export default function NewTradePage() {
           <div className="space-y-2"><Label>RR Achieved</Label><Input type="number" step="any" value={formData.rr_achieved} onChange={e => setFormData({...formData, rr_achieved: e.target.value})} placeholder="e.g. 2.5" /></div>
           <div className="space-y-2 md:col-span-2">
             <Label>Screenshot</Label>
-            <Input 
-              type="file" 
-              accept="image/*" 
-              onChange={e => setFile(e.target.files ? e.target.files[0] : null)} 
-              className="file:bg-primary file:text-primary-foreground file:border-0 file:rounded-md file:px-4 file:py-1 file:mr-4 file:cursor-pointer hover:file:bg-primary/90"
-            />
-            <p className="text-xs text-muted-foreground mt-1">Attach a screenshot of your chart</p>
+            <ImageDropzone file={file} onFileChange={setFile} />
           </div>
         </div>
 

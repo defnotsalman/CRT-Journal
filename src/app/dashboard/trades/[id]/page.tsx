@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageDropzone } from "@/components/ImageDropzone";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Trash, X } from "lucide-react";
@@ -260,12 +261,7 @@ export default function TradeDetailsPage({ params }: { params: Promise<{ id: str
             
             <div className="space-y-2">
               <Label>Add New Screenshot</Label>
-              <Input 
-                type="file" 
-                accept="image/*" 
-                onChange={e => setFile(e.target.files ? e.target.files[0] : null)} 
-                className="file:bg-primary file:text-primary-foreground file:border-0 file:rounded-md file:px-4 file:py-1 file:mr-4 file:cursor-pointer hover:file:bg-primary/90"
-              />
+              <ImageDropzone file={file} onFileChange={setFile} />
             </div>
 
             <Button onClick={handleUpdate} disabled={updating} className="w-full">
