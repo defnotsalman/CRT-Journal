@@ -34,6 +34,7 @@ export default function NewTradePage() {
     notes: ""
   });
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
+  const [file, setFile] = useState<File | null>(null);
 
   useGSAP(() => {
     gsap.fromTo(".fade-up", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.05 });
@@ -80,6 +81,23 @@ export default function NewTradePage() {
       toast.error(`Trade failed: ${error.message || JSON.stringify(error)}`);
       setLoading(false);
       return;
+    }
+
+    if (file) {
+      const ext = file.name.split('.').pop();
+      const fileName = `${session.user.id}/${trade.id}/${Date.now()}.${ext}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('trade-screenshots')
+        .upload(fileName, file);
+
+      if (uploadData) {
+        await supabase.from('screenshots').insert({
+          trade_id: trade.id,
+          storage_path: uploadData.path
+        });
+      } else if (uploadError) {
+        toast.error(`Screenshot upload failed: ${uploadError.message}`);
+      }
     }
 
     toast.success("Trade saved!");
@@ -160,6 +178,16 @@ export default function NewTradePage() {
             </Select>
           </div>
           <div className="space-y-2"><Label>RR Achieved</Label><Input type="number" step="any" value={formData.rr_achieved} onChange={e => setFormData({...formData, rr_achieved: e.target.value})} placeholder="e.g. 2.5" /></div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Screenshot</Label>
+            <Input 
+              type="file" 
+              accept="image/*" 
+              onChange={e => setFile(e.target.files ? e.target.files[0] : null)} 
+              className="file:bg-primary file:text-primary-foreground file:border-0 file:rounded-md file:px-4 file:py-1 file:mr-4 file:cursor-pointer hover:file:bg-primary/90"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Attach a screenshot of your chart</p>
+          </div>
         </div>
 
         <div className="space-y-6 fade-up">
