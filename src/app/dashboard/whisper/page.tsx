@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import { Send, Lock, Clock, Flame } from "lucide-react";
 import { BurnerMessage } from "@/components/BurnerMessage";
 
@@ -29,7 +30,7 @@ export default function WhisperNetworkPage() {
   async function loadUnreadCounts() {
     const { data } = await supabase.from("private_messages")
       .select("sender_id")
-      .eq("receiver_id", session!.user.id)
+      .eq("receiver_id", session?.user?.id)
       .eq("is_read", false)
       .gt("expires_at", new Date().toISOString());
     
@@ -50,10 +51,10 @@ export default function WhisperNetworkPage() {
         receiver:profiles!friendships_receiver_id_fkey ( id, display_name, avatar_url )
       `)
       .eq("status", "accepted")
-      .or(`requester_id.eq.${session!.user.id},receiver_id.eq.${session!.user.id}`);
+      .or(`requester_id.eq.${session?.user?.id},receiver_id.eq.${session?.user?.id}`);
     
     if (fList) {
-      const parsed = fList.map((f: any) => f.requester.id === session!.user.id ? f.receiver : f.requester);
+      const parsed = fList.map((f: any) => f.requester?.id === session?.user?.id ? f.receiver : f.requester).filter(Boolean);
       setFriends(parsed);
     }
   }
@@ -64,7 +65,7 @@ export default function WhisperNetworkPage() {
     async function loadMessages() {
       const { data } = await supabase.from("private_messages")
         .select("*")
-        .or(`and(sender_id.eq.${session!.user.id},receiver_id.eq.${selectedFriend.id}),and(sender_id.eq.${selectedFriend.id},receiver_id.eq.${session!.user.id})`)
+        .or(`and(sender_id.eq.${session?.user?.id},receiver_id.eq.${selectedFriend.id}),and(sender_id.eq.${selectedFriend.id},receiver_id.eq.${session?.user?.id})`)
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: true });
       if (data) setMessages(data);
@@ -72,7 +73,7 @@ export default function WhisperNetworkPage() {
       // Mark as read
       await supabase.from("private_messages")
         .update({ is_read: true })
-        .eq("receiver_id", session!.user.id)
+        .eq("receiver_id", session?.user?.id)
         .eq("sender_id", selectedFriend.id)
         .eq("is_read", false);
         
@@ -85,15 +86,15 @@ export default function WhisperNetworkPage() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "private_messages" }, payload => {
         const msg = payload.new;
         if (
-          (msg.sender_id === session!.user.id && msg.receiver_id === selectedFriend.id) ||
-          (msg.sender_id === selectedFriend.id && msg.receiver_id === session!.user.id)
+          (msg.sender_id === session?.user?.id && msg.receiver_id === selectedFriend.id) ||
+          (msg.sender_id === selectedFriend.id && msg.receiver_id === session?.user?.id)
         ) {
           setMessages(prev => [...prev, msg]);
-          if (msg.receiver_id === session!.user.id && !msg.is_read) {
+          if (msg.receiver_id === session?.user?.id && !msg.is_read) {
              // mark as read instantly if chat is open
              supabase.from("private_messages").update({ is_read: true }).eq("id", msg.id).then();
           }
-        } else if (msg.receiver_id === session!.user.id) {
+        } else if (msg.receiver_id === session?.user?.id) {
           // If we receive a message from someone else, update their unread count
           setUnreadCounts(prev => ({ ...prev, [msg.sender_id]: (prev[msg.sender_id] || 0) + 1 }));
         }
@@ -122,7 +123,7 @@ export default function WhisperNetworkPage() {
     expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour self-destruct
 
     const payload = {
-      sender_id: session!.user.id,
+      sender_id: session?.user?.id,
       receiver_id: selectedFriend.id,
       content: newMessage.trim(),
       expires_at: expiresAt.toISOString(),
@@ -150,7 +151,7 @@ export default function WhisperNetworkPage() {
           <div className="p-4 border-b border-border bg-background flex items-center justify-between">
             <h3 className="font-bold">Contacts</h3>
             <Button size="sm" variant="ghost" className="text-xs text-muted-foreground h-6 px-2" onClick={async () => {
-              await supabase.from("private_messages").update({ is_read: true }).eq("receiver_id", session!.user.id).eq("is_read", false);
+              await supabase.from("private_messages").update({ is_read: true }).eq("receiver_id", session?.user?.id).eq("is_read", false);
               setUnreadCounts({});
             }}>Mark All Read</Button>
           </div>
@@ -205,7 +206,7 @@ export default function WhisperNetworkPage() {
                   <div className="text-center text-xs text-muted-foreground mt-10">Connection established. Handshake complete.</div>
                 ) : (
                   messages.map(msg => {
-                    const isMe = msg.sender_id === session!.user.id;
+                    const isMe = msg.sender_id === session?.user?.id;
                     return (
                       <div 
                         key={msg.id} 

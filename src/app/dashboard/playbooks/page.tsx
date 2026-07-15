@@ -31,7 +31,7 @@ export default function PlaybooksPage() {
 
   useGSAP(() => {
     gsap.fromTo(".fade-up", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 });
-  }, [playbooks]);
+  }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
