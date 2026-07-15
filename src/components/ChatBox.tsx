@@ -138,13 +138,13 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
   );
 
   return (
-    <div className="flex flex-col border border-border rounded-xl bg-card overflow-hidden h-[400px] relative">
+    <div className="flex flex-col border border-border rounded-xl bg-card overflow-hidden h-[600px] relative">
       <div className="p-3 border-b border-border flex justify-between items-center bg-muted/20">
         <h3 className="font-bold flex items-center gap-2">Live Chat 💬</h3>
         <Button variant="ghost" size="sm" onClick={handleClearChat} className="text-xs text-destructive hover:bg-destructive/10">Clear Chat</Button>
       </div>
       
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 min-h-0" ref={scrollRef}>
         <div className="flex flex-col gap-3">
           {messages.map(msg => {
             const isMe = msg.user_id === session?.user.id;
@@ -199,9 +199,9 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
 
-      <div className="p-3 border-t border-border bg-card relative">
+      <div className="p-3 border-t border-border bg-card relative shrink-0">
         {showMentions && filteredNetwork.length > 0 && (
           <div className="absolute bottom-full mb-2 left-3 bg-card border border-border rounded-lg shadow-lg z-10 w-48 overflow-hidden">
             {filteredNetwork.map((u: any) => (
