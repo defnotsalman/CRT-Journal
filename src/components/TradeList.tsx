@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { format } from "date-fns";
 
-export function TradeList({ trades }: { trades: any[] }) {
+export function TradeList({ trades, currentUserId, networkUsers }: { trades: any[], currentUserId?: string, networkUsers?: Record<string, any> }) {
   if (trades.length === 0) {
     return (
       <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg mt-4">
@@ -21,8 +21,13 @@ export function TradeList({ trades }: { trades: any[] }) {
               <span className="font-mono text-xs text-muted-foreground w-20">
                 {format(new Date(trade.created_at), "MMM d")}
               </span>
-              <span className="font-bold text-foreground group-hover:text-primary transition-colors">
+              <span className="font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
                 {trade.pair || "Unknown"}
+                {currentUserId && trade.user_id !== currentUserId && networkUsers?.[trade.user_id] && (
+                  <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded uppercase tracking-wider font-normal">
+                    {networkUsers[trade.user_id].display_name}
+                  </span>
+                )}
               </span>
               <span className={`text-xs px-2 py-1 rounded-full ${
                 trade.direction === 'long' ? 'bg-green-500/10 text-green-500' : 

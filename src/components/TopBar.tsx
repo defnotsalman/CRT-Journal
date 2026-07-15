@@ -63,7 +63,7 @@ export function TopBar() {
   return (
     <div className="flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-md mb-8">
       <Link href="/dashboard" className="flex items-center gap-3 no-underline group hover:scale-105 transition-transform duration-300">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${showBat ? 'bg-primary/20 border-primary animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.5)] scale-110' : 'bg-muted/10 border-border opacity-30 grayscale'}`}>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center border border-primary/50 bg-primary/10 animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.3)] transition-all duration-300 hover:scale-110 hover:bg-primary/20">
           <span className="text-xl">🦇</span>
         </div>
         <div className="flex flex-col">

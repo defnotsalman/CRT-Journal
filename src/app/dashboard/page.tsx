@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
       // 3. Trades
       const { data: trs } = await supabase.from("trades").select("*").order("created_at", { ascending: false });
-      if (trs) setTrades(trs.filter(t => t.user_id === session!.user.id));
+      if (trs) setTrades(trs.filter(t => t.user_id === session!.user.id || !!netMap[t.user_id]));
 
       // 4. Education
       const { data: edu } = await supabase.from("education_resources").select("*, profiles(display_name)").order("created_at", { ascending: false });
@@ -113,7 +113,7 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-bold tracking-tight">Recent Trades</h2>
               <Link href="/dashboard/trades"><Button variant="link">View all &rarr;</Button></Link>
             </div>
-            <TradeList trades={trades} />
+            <TradeList trades={trades} currentUserId={session?.user.id} networkUsers={networkUsers} />
           </div>
 
           <div className="pt-8 border-t border-border">
