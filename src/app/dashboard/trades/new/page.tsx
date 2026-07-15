@@ -35,6 +35,7 @@ export default function NewTradePage() {
   });
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [file, setFile] = useState<File | null>(null);
+  const [isCustomAnchor, setIsCustomAnchor] = useState(false);
 
   useGSAP(() => {
     gsap.fromTo(".fade-up", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.05 });
@@ -152,15 +153,36 @@ export default function NewTradePage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>HTF Anchor</Label>
-            <Select value={formData.htf_anchor} onValueChange={v => setFormData({...formData, htf_anchor: v || ""})}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="h4">H4</SelectItem>
-                <SelectItem value="h1">H1</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="flex justify-between items-center">
+              HTF Anchor
+              {isCustomAnchor && <button type="button" onClick={() => setIsCustomAnchor(false)} className="text-[10px] text-primary hover:underline">Presets</button>}
+            </Label>
+            {isCustomAnchor ? (
+              <Input 
+                autoFocus 
+                value={formData.htf_anchor}
+                onChange={e => setFormData({...formData, htf_anchor: e.target.value})} 
+                placeholder="e.g. Weekly, M15..." 
+              />
+            ) : (
+              <Select value={['daily', 'h4', 'h1', 'none'].includes(formData.htf_anchor) ? formData.htf_anchor : ''} onValueChange={v => {
+                if (v === 'other') {
+                  setIsCustomAnchor(true);
+                  setFormData({...formData, htf_anchor: ""});
+                } else {
+                  setFormData({...formData, htf_anchor: v === 'none' ? "" : (v || "")});
+                }
+              }}>
+                <SelectTrigger><SelectValue placeholder="Select Anchor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="h4">H4</SelectItem>
+                  <SelectItem value="h1">H1</SelectItem>
+                  <SelectItem value="other">Other (Custom)</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="space-y-2"><Label>Entry Price</Label><Input type="number" step="any" value={formData.entry} onChange={e => setFormData({...formData, entry: e.target.value})} /></div>
           <div className="space-y-2"><Label>Stop Loss</Label><Input type="number" step="any" value={formData.stop_loss} onChange={e => setFormData({...formData, stop_loss: e.target.value})} /></div>
