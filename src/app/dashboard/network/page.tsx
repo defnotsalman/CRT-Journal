@@ -10,6 +10,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
+import { RankBadge } from "@/components/RankBadge";
 
 export default function NetworkPage() {
   const { session } = useAuth();
@@ -28,8 +29,8 @@ export default function NetworkPage() {
       .from("friendships")
       .select(`
         id, status, requester_id, receiver_id, created_at,
-        requester:profiles!friendships_requester_id_fkey ( id, display_name, friend_code, last_seen, status, active_badge ),
-        receiver:profiles!friendships_receiver_id_fkey ( id, display_name, friend_code, last_seen, status, active_badge )
+        requester:profiles!friendships_requester_id_fkey ( id, display_name, friend_code, last_seen, status, active_badge, rank ),
+        receiver:profiles!friendships_receiver_id_fkey ( id, display_name, friend_code, last_seen, status, active_badge, rank )
       `)
       .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
 
@@ -176,6 +177,7 @@ export default function NetworkPage() {
                         </span>
                       )}
                       {friendProf?.display_name}
+                      {friendProf?.rank && <RankBadge rankTitle={friendProf.rank} className="ml-2" />}
                       {online ? (
                         <span className="flex h-2 w-2 relative" title="Online now">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>

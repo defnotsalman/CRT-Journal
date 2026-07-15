@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ScrollArea } from "./ui/scroll-area";
 import { X, Reply, Trash } from "lucide-react";
+import { RankBadge } from "./RankBadge";
 
 export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> }) {
   const { session } = useAuth();
@@ -155,7 +156,11 @@ export function ChatBox({ networkUsers }: { networkUsers: Record<string, any> })
                 className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`}
                 onMouseLeave={() => setContextMenuId(null)}
               >
-                <span className="text-[10px] text-muted-foreground mb-1 ml-1">{getDisplayName(msg.user_id)} • {format(new Date(msg.created_at), "h:mm a")}</span>
+                <div className="flex items-center gap-2 mb-1 ml-1">
+                  <span className="text-[10px] text-muted-foreground">{getDisplayName(msg.user_id)}</span>
+                  {!isMe && <RankBadge rankTitle={networkUsers[msg.user_id]?.rank} className="scale-75 origin-left" />}
+                  <span className="text-[10px] text-muted-foreground">• {format(new Date(msg.created_at), "h:mm a")}</span>
+                </div>
                 
                 <div 
                   onContextMenu={(e) => { e.preventDefault(); setContextMenuId(msg.id); }}

@@ -25,6 +25,11 @@ BEGIN
     WHEN duplicate_column THEN null;
   END;
   BEGIN
+    ALTER TABLE profiles ADD COLUMN rank text default 'Street Thug';
+  EXCEPTION
+    WHEN duplicate_column THEN null;
+  END;
+  BEGIN
     ALTER TABLE profiles ADD COLUMN status text;
   EXCEPTION
     WHEN duplicate_column THEN null;
@@ -311,3 +316,35 @@ drop policy if exists "private_messages_delete" on private_messages;
 create policy "private_messages_delete" on private_messages for delete using (auth.uid() = sender_id or auth.uid() = receiver_id);
 drop policy if exists "private_messages_update" on private_messages;
 create policy "private_messages_update" on private_messages for update using (auth.uid() = receiver_id or auth.uid() = sender_id);
+
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE private_messages ADD COLUMN is_burner boolean default false;
+  EXCEPTION
+    WHEN duplicate_column THEN null;
+  END;
+END $$;
+
+create table if not exists oracle_signals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  pair text not null,
+  direction text not null,
+  entry_price text,
+  target_price text,
+  stop_loss text,
+  notes text,
+  status text default 'open',
+  created_at timestamptz not null default now()
+);
+
+alter table oracle_signals enable row level security;
+drop policy if exists "oracle_signals_select" on oracle_signals;
+create policy "oracle_signals_select" on oracle_signals for select using (true);
+drop policy if exists "oracle_signals_insert" on oracle_signals;
+create policy "oracle_signals_insert" on oracle_signals for insert with check (auth.uid() = user_id);
+drop policy if exists "oracle_signals_update" on oracle_signals;
+create policy "oracle_signals_update" on oracle_signals for update using (auth.uid() = user_id);
+drop policy if exists "oracle_signals_delete" on oracle_signals;
+create policy "oracle_signals_delete" on oracle_signals for delete using (auth.uid() = user_id);

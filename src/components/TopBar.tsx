@@ -7,16 +7,32 @@ import { Button } from "./ui/button";
 import { supabase } from "@/lib/supabase";
 import { LogOut, Plus, Users, Trophy, Home, BarChart2, BookOpen, User, MessageSquare } from "lucide-react";
 import { useAuth } from "./AuthProvider";
+import { RankBadge } from "./RankBadge";
+import { Moon } from "lucide-react";
 
 export function TopBar() {
   const { session } = useAuth();
   const pathname = usePathname();
   const [hasUnread, setHasUnread] = useState(false);
+  const [myRank, setMyRank] = useState<string>("Street Thug");
+  const [batcaveActive, setBatcaveActive] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("batcave-mode");
+    if (saved === "true") setBatcaveActive(true);
+  }, []);
+
+  const toggleBatcave = () => {
+    const nextState = !batcaveActive;
+    setBatcaveActive(nextState);
+    localStorage.setItem("batcave-mode", nextState ? "true" : "false");
+    window.dispatchEvent(new CustomEvent("batcave-toggle", { detail: { active: nextState } }));
+  };
 
   useEffect(() => {
     if (!session) return;
     
-    // Initial check
+    // Initial check for unread
     supabase.from("private_messages")
       .select("id")
       .eq("receiver_id", session.user.id)
@@ -25,6 +41,15 @@ export function TopBar() {
       .limit(1)
       .then(({ data }) => {
         if (data && data.length > 0) setHasUnread(true);
+      });
+
+    // Fetch my profile for rank
+    supabase.from("profiles")
+      .select("rank")
+      .eq("id", session.user.id)
+      .single()
+      .then(({ data }) => {
+        if (data && data.rank) setMyRank(data.rank);
       });
 
     // Listener
@@ -89,6 +114,14 @@ export function TopBar() {
           <BarChart2 className="w-4 h-4 mr-2" />
           Analytics
         </Link>
+        <Link href="/dashboard/oracle" className={`bubble-nav-item text-cyan-500 hover:bg-cyan-500/10 hover:border-cyan-500/50 ${pathname === '/dashboard/oracle' ? 'bg-cyan-500/20 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.5)]' : ''}`}>
+          <span className="mr-2">👁️</span>
+          Oracle
+        </Link>
+        <Link href="/dashboard/arkham" className={`bubble-nav-item text-red-500 hover:bg-red-500/10 hover:border-red-500/50 ${pathname === '/dashboard/arkham' ? 'bg-red-500/20 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : ''}`}>
+          <span className="mr-2">⛓️</span>
+          Arkham
+        </Link>
         <Link href="/dashboard/playbooks" className={`bubble-nav-item ${pathname === '/dashboard/playbooks' ? 'bubble-nav-active' : ''}`}>
           <BookOpen className="w-4 h-4 mr-2" />
           Playbooks
@@ -101,9 +134,13 @@ export function TopBar() {
           <Plus className="w-4 h-4 mr-2" />
           New Trade
         </Link>
-        <Link href="/dashboard/profile" className={`bubble-nav-item ${pathname === '/dashboard/profile' ? 'bubble-nav-active' : ''}`}>
+        <Link href="/dashboard/profile" className={`bubble-nav-item flex items-center gap-2 ${pathname === '/dashboard/profile' ? 'bubble-nav-active' : ''}`}>
           <User className="w-4 h-4" />
+          <RankBadge rankTitle={myRank} />
         </Link>
+        <button onClick={toggleBatcave} className={`bubble-nav-item ${batcaveActive ? 'bg-primary/20 border-primary text-primary shadow-[0_0_10px_rgba(234,179,8,0.3)]' : ''}`} title="Toggle Batcave Mode">
+          <Moon className="w-4 h-4" />
+        </button>
         <button onClick={handleSignOut} className="bubble-nav-item !bg-destructive/10 hover:!bg-destructive/20 hover:!border-destructive/50 text-destructive hover:!text-destructive">
           <LogOut className="w-4 h-4" />
         </button>

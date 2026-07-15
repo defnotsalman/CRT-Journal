@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { TopBar } from "@/components/TopBar";
 import { Toaster } from "@/components/ui/sonner";
+import { BatcaveEffect } from "@/components/BatcaveEffect";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -26,6 +27,7 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased min-h-screen relative`}
       >
         <AuthProvider>
+          <BatcaveEffect />
           <TopBar />
           <div className="container mx-auto p-4 md:p-8 max-w-5xl relative z-10">
             {children}

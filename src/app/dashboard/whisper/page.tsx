@@ -6,8 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
-import { Send, Lock, Clock } from "lucide-react";
+import { Send, Lock, Clock, Flame } from "lucide-react";
+import { BurnerMessage } from "@/components/BurnerMessage";
 
 export default function WhisperNetworkPage() {
   const { session } = useAuth();
@@ -17,6 +17,7 @@ export default function WhisperNetworkPage() {
   const [newMessage, setNewMessage] = useState("");
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
+  const [isBurner, setIsBurner] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -124,10 +125,12 @@ export default function WhisperNetworkPage() {
       sender_id: session!.user.id,
       receiver_id: selectedFriend.id,
       content: newMessage.trim(),
-      expires_at: expiresAt.toISOString()
+      expires_at: expiresAt.toISOString(),
+      is_burner: isBurner
     };
     
     setNewMessage("");
+    setIsBurner(false);
     await supabase.from("private_messages").insert(payload);
   };
 
@@ -211,9 +214,13 @@ export default function WhisperNetworkPage() {
                       >
                         <div 
                           onContextMenu={(e) => { e.preventDefault(); setContextMenuId(msg.id); }}
-                          className={`relative max-w-[70%] p-3 rounded-md cursor-context-menu transition-all ${isMe ? 'bg-primary text-primary-foreground border border-primary/50' : 'bg-zinc-900 border border-zinc-800 text-zinc-300'} ${contextMenuId === msg.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-black' : ''}`}
+                          className={`relative max-w-[70%] ${!msg.is_burner ? 'p-3 rounded-md cursor-context-menu transition-all' : ''} ${msg.is_burner ? '' : isMe ? 'bg-primary text-primary-foreground border border-primary/50' : 'bg-zinc-900 border border-zinc-800 text-zinc-300'} ${contextMenuId === msg.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-black' : ''}`}
                         >
-                          {msg.content}
+                          {msg.is_burner ? (
+                            <BurnerMessage msg={msg} isMe={isMe} />
+                          ) : (
+                            msg.content
+                          )}
                           
                           {contextMenuId === msg.id && (
                             <div className={`flex items-center gap-2 mt-2 pt-2 border-t ${isMe ? 'border-primary-foreground/20 justify-end' : 'border-zinc-700 justify-start'}`}>
@@ -239,14 +246,20 @@ export default function WhisperNetworkPage() {
 
               {/* Input */}
               <form onSubmit={handleSend} className="p-4 border-t border-border bg-muted/10">
+                <div className="flex gap-2 mb-2 items-center">
+                  <label className="flex items-center gap-2 text-xs font-bold text-red-500 cursor-pointer hover:text-red-400">
+                    <input type="checkbox" checked={isBurner} onChange={e => setIsBurner(e.target.checked)} className="accent-red-500" />
+                    <Flame className="w-3 h-3" /> Burner Mode
+                  </label>
+                </div>
                 <div className="flex gap-2">
                   <Input 
                     value={newMessage}
                     onChange={e => setNewMessage(e.target.value)}
-                    placeholder="Enter encrypted message..." 
-                    className="font-mono bg-black border-zinc-800 focus-visible:ring-primary"
+                    placeholder={isBurner ? "Enter self-destructing message..." : "Enter encrypted message..."} 
+                    className={`font-mono focus-visible:ring-primary ${isBurner ? 'bg-red-950/20 border-red-500/50 text-red-200 placeholder:text-red-500/50' : 'bg-black border-zinc-800'}`}
                   />
-                  <Button type="submit" size="icon"><Send className="w-4 h-4" /></Button>
+                  <Button type="submit" size="icon" className={isBurner ? "bg-red-500 hover:bg-red-600 text-white" : ""}><Send className="w-4 h-4" /></Button>
                 </div>
               </form>
             </>

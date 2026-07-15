@@ -12,6 +12,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { calculateRank } from "@/lib/ranks";
 
 export default function DashboardPage() {
   const { session } = useAuth();
@@ -43,8 +44,8 @@ export default function DashboardPage() {
       const { data: friends } = await supabase
         .from("friendships")
         .select(`
-          requester:profiles!friendships_requester_id_fkey ( id, display_name, last_seen ),
-          receiver:profiles!friendships_receiver_id_fkey ( id, display_name, last_seen )
+          requester:profiles!friendships_requester_id_fkey ( id, display_name, last_seen, rank ),
+          receiver:profiles!friendships_receiver_id_fkey ( id, display_name, last_seen, rank )
         `)
         .eq("status", "accepted")
         .or(`requester_id.eq.${session!.user.id},receiver_id.eq.${session!.user.id}`);
@@ -62,7 +63,15 @@ export default function DashboardPage() {
       const { data: trs } = await supabase.from("trades").select("*").order("created_at", { ascending: false });
       if (trs) {
         setTrades(trs.filter(t => t.user_id === session!.user.id || !!netMap[t.user_id]));
-        setMyTrades(trs.filter(t => t.user_id === session!.user.id));
+        const myTs = trs.filter(t => t.user_id === session!.user.id);
+        setMyTrades(myTs);
+        
+        // Update rank if needed
+        const newRank = calculateRank(myTs).title;
+        if (myProf.rank !== newRank) {
+          await supabase.from("profiles").update({ rank: newRank }).eq("id", session!.user.id);
+          setProfile(prev => prev ? { ...prev, rank: newRank } : prev);
+        }
       }
 
       // 4. Education
