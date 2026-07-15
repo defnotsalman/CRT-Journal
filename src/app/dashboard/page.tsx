@@ -70,7 +70,7 @@ export default function DashboardPage() {
         const newRank = calculateRank(myTs).title;
         if (myProf.rank !== newRank) {
           await supabase.from("profiles").update({ rank: newRank }).eq("id", session!.user.id);
-          setProfile(prev => prev ? { ...prev, rank: newRank } : prev);
+          setProfile((prev: any) => prev ? { ...prev, rank: newRank } : prev);
         }
       }
 
