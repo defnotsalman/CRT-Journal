@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null);
   const [networkUsers, setNetworkUsers] = useState<Record<string, any>>({});
   const [trades, setTrades] = useState<any[]>([]);
+  const [myTrades, setMyTrades] = useState<any[]>([]);
   const [educationPosts, setEducationPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +60,10 @@ export default function DashboardPage() {
 
       // 3. Trades
       const { data: trs } = await supabase.from("trades").select("*").order("created_at", { ascending: false });
-      if (trs) setTrades(trs.filter(t => t.user_id === session!.user.id || !!netMap[t.user_id]));
+      if (trs) {
+        setTrades(trs.filter(t => t.user_id === session!.user.id || !!netMap[t.user_id]));
+        setMyTrades(trs.filter(t => t.user_id === session!.user.id));
+      }
 
       // 4. Education
       const { data: edu } = await supabase.from("education_resources").select("*, profiles(display_name)").order("created_at", { ascending: false });
@@ -83,7 +87,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="fade-in-stagger">
-        <DashboardStats trades={trades} profile={profile} />
+        <DashboardStats trades={myTrades} profile={profile} />
       </div>
 
       <div className="fade-in-stagger p-6 border border-primary/20 bg-card rounded-xl relative overflow-hidden group">
@@ -99,7 +103,7 @@ export default function DashboardPage() {
           </div>
           <div className="text-right">
             <div className="text-3xl font-black font-mono text-primary">
-              {trades.filter(t => t.rr_achieved > 2 && new Date(t.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000).length} / 3
+              {myTrades.filter(t => t.rr_achieved > 2 && new Date(t.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000).length} / 3
             </div>
             <div className="text-xs text-muted-foreground">Trades Completed</div>
           </div>
@@ -133,7 +137,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <RiddlerBadges trades={trades} profile={profile} />
+      <RiddlerBadges trades={myTrades} profile={profile} />
     </div>
   );
 }
